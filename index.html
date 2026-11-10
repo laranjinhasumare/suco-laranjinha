@@ -1329,6 +1329,14 @@ body.light-mode .hname{background:#F8FAFC !important}
     <div id="cfg-backup-msg" style="font-size:0.72rem;margin-top:8px;color:var(--g)"></div>
   </div>
 
+  <!-- Enviar dados para Firebase -->
+  <div style="background:var(--card);border:2px solid #f97316;border-radius:14px;padding:14px 18px;max-width:480px;margin-bottom:10px">
+    <div style="font-size:0.72rem;font-weight:800;color:#f97316;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">☁️ Sincronizar com Firebase</div>
+    <div style="font-size:0.72rem;color:var(--mu);margin-bottom:10px">Envia todos os dados deste computador para a nuvem. Use isso para que o link do GitHub fique com os dados corretos.</div>
+    <button onclick="cfgEnviarFirebase()" style="padding:10px 20px;border-radius:8px;border:none;background:#f97316;color:#fff;font-weight:800;font-size:0.85rem;cursor:pointer">☁️ Enviar Tudo para Firebase</button>
+    <div id="cfg-firebase-msg" style="font-size:0.72rem;margin-top:8px;color:var(--g)"></div>
+  </div>
+
   <div style="background:var(--card);border:1.5px solid var(--bd);border-radius:14px;padding:18px 20px;max-width:480px;display:flex;flex-direction:column;gap:12px">
     <div style="font-size:0.72rem;font-weight:800;color:var(--o);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">🖨️ Dados do Cupom / Comanda</div>
 
@@ -2137,7 +2145,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.173';
+var APP_VERSION = 'v1.6.174';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -4866,7 +4874,8 @@ window._fbSetEstoque = function(data) { return set(ref(db, 'slj/estoque'), data)
 window._fbSetParams = function(data) { return set(ref(db, 'slj/params'), data); };
 
 // ── PDV em tempo real ─────────────────────────────────────────
-window._fbSetPDV = function(state) { return set(ref(db, 'slj/pdv'), state); };
+window._fbSetPDV = function(state) { return set(ref(db, 'slj/pdv'), state); }
+window._fbSetExtras = function(data) { return set(ref(db, 'slj/extras'), data); };
 
 // Listener em tempo real do PDV — multi-caixa (item #10)
 // Só aplica atualização de outro dispositivo (evita loop)
@@ -4948,6 +4957,24 @@ get(ref(db, 'slj')).then(function(snap) {
                         localStorage.setItem('slj_pdv_state_v2', JSON.stringify(fbData.pdv));
                         if (window.pdvCarregar) pdvCarregar();
                     }
+                } catch(e) {}
+            }
+
+            // Carregar extras (config, cats, receitas, etc)
+            if (fbData.extras) {
+                try {
+                    var extraKeys = ['slj_config','slj_cats','slj_receitas','slj_nfe_cfg','slj_theme','slj_senha_num','slj_senha_ultima','slj_caixa_status','slj_turnos_historico'];
+                    extraKeys.forEach(function(ek) {
+                        if (fbData.extras[ek] !== undefined) {
+                            var v = fbData.extras[ek];
+                            localStorage.setItem(ek, typeof v === 'string' ? v : JSON.stringify(v));
+                        }
+                    });
+                    // Reaplica tema e config
+                    if (fbData.extras.slj_theme) {
+                        document.documentElement.setAttribute('data-theme', fbData.extras.slj_theme);
+                    }
+                    if (typeof cfgCarregar === 'function') cfgCarregar();
                 } catch(e) {}
             }
 
@@ -7957,6 +7984,55 @@ window.cfgSalvar = function() {
     localStorage.setItem(SENHA_KEY, String(proxSenha));
     alert('Configuracoes salvas!');
   } catch(e) { alert('Erro ao salvar: ' + e.message); }
+};
+
+// ── Enviar tudo para Firebase ──────────────────────────────
+window.cfgEnviarFirebase = async function() {
+  var msg = document.getElementById('cfg-firebase-msg');
+  if (!window._fbReady) {
+    if (msg) { msg.style.color='var(--r)'; msg.textContent = '❌ Firebase não conectado. Verifique sua conexão.'; }
+    return;
+  }
+  if (!confirm('Enviar todos os dados deste computador para o Firebase?\n\nIsso vai substituir os dados na nuvem.')) return;
+  if (msg) { msg.style.color='var(--b)'; msg.textContent = '⏳ Enviando dados...'; }
+  try {
+    var erros = 0;
+    var ok = 0;
+    // Produtos
+    var preco = JSON.parse(localStorage.getItem('slj_preco') || '{}');
+    if (preco.produtos && preco.produtos.length > 0) {
+      await window._fbSetProdutos(preco.produtos); ok++;
+    }
+    // Params
+    var params = JSON.parse(localStorage.getItem('slj_preco_params') || 'null');
+    if (params) { await window._fbSetParams(params); ok++; }
+    // PDV state
+    var pdv = JSON.parse(localStorage.getItem('slj_pdv_state_v2') || 'null');
+    if (pdv) { await window._fbSetPDV(pdv); ok++; }
+    // DRE
+    var dreKey = null;
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.startsWith('slj_2026')) { dreKey = k; break; }
+    }
+    if (dreKey) {
+      var dre = JSON.parse(localStorage.getItem(dreKey) || 'null');
+      if (dre) { await window._fbSet(dre); ok++; }
+    }
+    // Config, cats, receitas, nfe_cfg via node separado
+    if (window._fbSetExtras) {
+      var extras = {};
+      var extraKeys = ['slj_config','slj_cats','slj_receitas','slj_nfe_cfg','slj_theme','slj_senha_num','slj_senha_ultima','slj_caixa_status','slj_turnos_historico'];
+      extraKeys.forEach(function(ek) {
+        var v = localStorage.getItem(ek);
+        if (v) { try { extras[ek] = JSON.parse(v); } catch(e) { extras[ek] = v; } }
+      });
+      if (Object.keys(extras).length > 0) { await window._fbSetExtras(extras); ok++; }
+    }
+    if (msg) { msg.style.color='var(--g)'; msg.textContent = '✅ ' + ok + ' grupos enviados para o Firebase! Abra o GitHub e atualize a página.'; }
+  } catch(e) {
+    if (msg) { msg.style.color='var(--r)'; msg.textContent = '❌ Erro: ' + e.message; }
+  }
 };
 
 // ── Exportar configurações ──────────────────────────────
