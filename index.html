@@ -2145,7 +2145,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.174';
+var APP_VERSION = 'v1.6.178';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -4952,7 +4952,11 @@ get(ref(db, 'slj')).then(function(snap) {
             if (fbData.pdv) {
                 try {
                     var localTs = (window.PDV && window.PDV._lastSaveTs) || 0;
-                    // Só aplica se a nuvem for mais recente
+                    // Sempre aplica o historico do Firebase (vendas)
+                    if (fbData.pdv.historico && fbData.pdv.historico.length) {
+                        if (window.PDV) window.PDV.historico = fbData.pdv.historico;
+                    }
+                    // Aplica resto do state só se nuvem for mais recente
                     if (fbData.pdv._ts && fbData.pdv._ts > localTs) {
                         localStorage.setItem('slj_pdv_state_v2', JSON.stringify(fbData.pdv));
                         if (window.pdvCarregar) pdvCarregar();
@@ -4975,11 +4979,52 @@ get(ref(db, 'slj')).then(function(snap) {
                         document.documentElement.setAttribute('data-theme', fbData.extras.slj_theme);
                     }
                     if (typeof cfgCarregar === 'function') cfgCarregar();
+                    // Recarrega produtos/categorias no PDV
+                    if (typeof pdvRenderCatalogo === 'function') pdvRenderCatalogo();
+                    if (typeof pdvRenderCats === 'function') pdvRenderCats();
+                    // Recarrega tela de contas/DRE
+                    if (typeof render_contas === 'function') render_contas();
+                    if (typeof render_dash === 'function') render_dash();
+                    console.log('Firebase extras carregados: config, cats, receitas ✅');
                 } catch(e) {}
             }
 
             // Re-render current page
             if (window.render_dash) render_dash();
+            // Reconstrói PDV.historico a partir dos turnos e recarrega telas
+            setTimeout(function() {
+                try {
+                    // Pega turnos do localStorage (já foi salvo acima via extras)
+                    var turnosRaw = localStorage.getItem('slj_turnos_historico');
+                    if (turnosRaw) {
+                        var turnos = JSON.parse(turnosRaw);
+                        if (Array.isArray(turnos) && turnos.length) {
+                            var todasVendas = [];
+                            turnos.forEach(function(t) {
+                                if (Array.isArray(t.vendas)) {
+                                    t.vendas.forEach(function(v) { todasVendas.push(v); });
+                                }
+                            });
+                            if (todasVendas.length) {
+                                // Injeta no PDV.historico diretamente
+                                if (window.PDV) window.PDV.historico = todasVendas;
+                                // Injeta no localStorage pdv_state para persistir
+                                try {
+                                    var pdvSt = JSON.parse(localStorage.getItem('slj_pdv_state_v2') || '{}');
+                                    pdvSt.historico = todasVendas;
+                                    localStorage.setItem('slj_pdv_state_v2', JSON.stringify(pdvSt));
+                                } catch(e2) {}
+                                console.log('PDV.historico: ' + todasVendas.length + ' vendas reconstruídas ✅');
+                            }
+                        }
+                    }
+                    // Recarrega telas
+                    if (typeof contasFiltrar === 'function') contasFiltrar();
+                    if (typeof render_dash === 'function') render_dash();
+                    if (typeof pdvRenderCatalogo === 'function') pdvRenderCatalogo();
+                    if (typeof pdvRenderCats === 'function') pdvRenderCats();
+                } catch(eHist) { console.log('Erro reconstruir historico:', eHist); }
+            }, 500);
             window._fbLoaded = true;
             console.log('Firebase: todos os dados carregados ✅');
             if (window.fb_show_status) fb_show_status('☁️ Dados sincronizados ✅', '#22C55E');
@@ -8006,9 +8051,20 @@ window.cfgEnviarFirebase = async function() {
     // Params
     var params = JSON.parse(localStorage.getItem('slj_preco_params') || 'null');
     if (params) { await window._fbSetParams(params); ok++; }
-    // PDV state
-    var pdv = JSON.parse(localStorage.getItem('slj_pdv_state_v2') || 'null');
-    if (pdv) { await window._fbSetPDV(pdv); ok++; }
+    // PDV state — inclui historico dos turnos se não estiver no state
+    var pdv = JSON.parse(localStorage.getItem('slj_pdv_state_v2') || 'null') || {};
+    if (!pdv.historico || !pdv.historico.length) {
+      // Reconstrói historico a partir dos turnos
+      try {
+        var turnosEnv = JSON.parse(localStorage.getItem('slj_turnos_historico') || '[]');
+        var histEnv = [];
+        if (Array.isArray(turnosEnv)) {
+          turnosEnv.forEach(function(t) { if (Array.isArray(t.vendas)) t.vendas.forEach(function(v){ histEnv.push(v); }); });
+        }
+        if (histEnv.length) pdv.historico = histEnv;
+      } catch(eEnv) {}
+    }
+    await window._fbSetPDV(pdv); ok++;
     // DRE
     var dreKey = null;
     for (var i = 0; i < localStorage.length; i++) {
