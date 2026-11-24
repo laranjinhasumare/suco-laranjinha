@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.225</title>
+<title>Suco Laranjinha -- PDV v1.6.226</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -721,7 +721,7 @@ body.light-mode .hname{background:#F8FAFC !important}
     <button class="nb" onclick="showPgFinanceiro('config-pdv',this)"><span class="ni">⚙️</span>Configurações</button>
     <div style="height:1px;background:var(--bd);margin:8px 0"></div>
     <div style="font-size:9px;color:#A855F7;padding:2px 10px 4px;font-family:monospace;text-transform:uppercase;letter-spacing:1px">🤖 Inteligência</div>
-    <button class="nb" onclick="showPgFinanceiro('ia-gerente',this)" style="background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(168,85,247,0.08));border-left:3px solid #A855F7 !important"><span class="ni">🤖</span>IA Gerente</button>
+    <button class="nb" onclick="showPg('ia-gerente',this)" style="background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(168,85,247,0.08));border-left:3px solid #A855F7 !important"><span class="ni">🤖</span>IA Gerente</button>
   </nav>
   <div class="sb-ft">
   Desenvolvido por <b>Junior Sartori</b><br>
@@ -2288,7 +2288,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.225';
+var APP_VERSION = 'v1.6.226';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
