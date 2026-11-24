@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.220</title>
+<title>Suco Laranjinha -- PDV v1.6.221</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -2285,7 +2285,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.220';
+var APP_VERSION = 'v1.6.221';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -11162,7 +11162,10 @@ function _cpEditorLinhas() {
   var cats = _cpCats();
   var h = '';
   _cpEdit.itens.forEach(function(it, i) {
-    var qtde = it.qtde || 1;
+    // Se qtde não foi salva, calcula na hora (qtde=1, unit=valor)
+    if (!it.qtde || it.qtde <= 0) it.qtde = 1;
+    if (!it.valor_unit || it.valor_unit <= 0) it.valor_unit = it.valor > 0 ? _r2(it.valor / it.qtde) : 0;
+    var qtde = it.qtde;
     var vlrUnit = it.valor_unit || 0;
     var temDesc = it.desconto_item > 0;
     // Tooltip de desconto aplicado
@@ -11174,7 +11177,7 @@ function _cpEditorLinhas() {
       + '<select onchange="_cpEdit.itens[' + i + '].cat=this.value" style="flex:1 1 110px;min-width:0;padding:6px 5px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.74rem">'
       + cats.map(function(c) { return '<option value="' + c.v + '"' + (c.v === it.cat ? ' selected' : '') + '>' + _cpEsc(c.n) + '</option>'; }).join('') + '</select>'
       // Qtde
-      + '<input type="number" min="0" step="0.001" value="' + (qtde !== 1 ? qtde : '') + '" oninput="_cpEdit.itens[' + i + '].qtde=parseFloat(this.value)||1;_cpEditorAtualizarUnit(' + i + ')" placeholder="Qtde" inputmode="decimal" style="flex:0 0 60px;width:60px;padding:6px 6px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.78rem;text-align:right">'
+      + '<input type="number" min="0" step="0.001" value="' + qtde + '" oninput="_cpEdit.itens[' + i + '].qtde=parseFloat(this.value)||1;_cpEditorAtualizarUnit(' + i + ')" placeholder="Qtde" inputmode="decimal" style="flex:0 0 60px;width:60px;padding:6px 6px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.78rem;text-align:right">'
       // Vlr Unit (readonly, calculado)
       + '<input id="cp-ed-unit-' + i + '" readonly value="' + (vlrUnit ? vlrUnit.toFixed(2).replace('.',',') : '') + '" placeholder="Unit" ' + descTip + ' style="flex:0 0 72px;width:72px;padding:6px 6px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:' + (temDesc ? 'var(--g)' : 'var(--mu)') + ';font-size:0.78rem;text-align:right;cursor:default">'
       // Total
@@ -12968,16 +12971,4 @@ window._crConfirmarTudo = function() {
   if (pares.length) {
     _crAplicar(p.y, p.mi, pares);
     crRender();
-    SLJ_TOAST('✅ DRE corrigido (' + pares.length + ' valores atualizados)', 'g');
-  } else {
-    SLJ_TOAST('Nenhuma alteracao com as opcoes escolhidas', 'y');
-  }
-  var ov = document.getElementById('cr-conc-ov'); if (ov) ov.remove();
-};
-
-
-</script>
-
-</body>
-</html>
-
+    SLJ_TOAST('✅ DRE corrigido (' + pares.length + 
