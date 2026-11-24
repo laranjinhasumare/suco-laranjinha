@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.234</title>
+<title>Suco Laranjinha -- PDV v1.6.235</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -2288,7 +2288,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.234';
+var APP_VERSION = 'v1.6.235';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -11193,13 +11193,13 @@ window.dreLancarFaturamentoCaixa = function(abertoEm, fechadoEm) {
 var CP_KEY = 'slj_contas_pagar';
 var CP_IA_KEY = 'slj_gemini_key';      // fica só neste computador (não vai para a nuvem)
 var CP_IA_MODELO_KEY = 'slj_gemini_modelo';
-var CP_IA_MODELOS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro'];
-// Garantir modelo válido: aceita somente modelos ativos (gemini-2.0 foi desligado em jun/2026)
+var CP_IA_MODELOS = ['gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-3.8-flash'];
+// Garantir modelo válido: gemini-2.0 e 2.5 foram desligados em 2026; usar gemini-3.x
 (function() {
   var modeloSalvo = localStorage.getItem('slj_gemini_modelo');
-  var validos = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro'];
+  var validos = ['gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-3.1-pro-preview'];
   if (!modeloSalvo || validos.indexOf(modeloSalvo) < 0) {
-    localStorage.setItem('slj_gemini_modelo', 'gemini-2.5-flash');
+    localStorage.setItem('slj_gemini_modelo', 'gemini-3.5-flash-lite');
   }
 })();
 var _cpEdit = null;   // documento aberto no editor
