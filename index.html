@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.226</title>
+<title>Suco Laranjinha -- PDV v1.6.228</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -2288,7 +2288,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.226';
+var APP_VERSION = 'v1.6.228';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -11365,10 +11365,12 @@ function _cpEditorLinhas() {
       + cats.map(function(c) { return '<option value="' + c.v + '"' + (c.v === it.cat ? ' selected' : '') + '>' + _cpEsc(c.n) + '</option>'; }).join('') + '</select>'
       // Qtde
       + '<input type="number" min="0" step="0.001" value="' + qtde + '" oninput="_cpEdit.itens[' + i + '].qtde=parseFloat(this.value)||1;_cpEditorAtualizarUnit(' + i + ')" placeholder="Qtde" inputmode="decimal" style="flex:0 0 60px;width:60px;padding:6px 6px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.78rem;text-align:right">'
-      // Vlr Unit (readonly, calculado)
-      + '<input id="cp-ed-unit-' + i + '" readonly value="' + (vlrUnit ? vlrUnit.toFixed(2).replace('.',',') : '') + '" placeholder="Unit" ' + descTip + ' style="flex:0 0 72px;width:72px;padding:6px 6px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:' + (temDesc ? 'var(--g)' : 'var(--mu)') + ';font-size:0.78rem;text-align:right;cursor:default">'
+      // Unidade de medida
+      + '<input value="' + _cpEsc(it.unidade||'') + '" oninput="_cpEdit.itens[' + i + '].unidade=this.value" placeholder="un" title="Unidade de medida (kg, L, un, cx...)" style="flex:0 0 42px;width:42px;padding:6px 4px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--mu);font-size:0.72rem;text-align:center">'
+      // Vlr Unit (editável - usuário pode digitar unit e total recalcula)
+      + '<input id="cp-ed-unit-' + i + '" type="number" min="0" step="0.01" value="' + (vlrUnit ? vlrUnit.toFixed(2) : '') + '" oninput="_cpEditorAtualizarTotalFromUnit(' + i + ')" placeholder="Unit" ' + descTip + ' inputmode="decimal" style="flex:0 0 72px;width:72px;padding:6px 6px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:' + (temDesc ? 'var(--g)' : 'var(--tx)') + ';font-size:0.78rem;text-align:right">'
       // Total
-      + '<input value="' + (it.valor ? String((+it.valor).toFixed(2)).replace('.', ',') : '') + '" oninput="_cpEdit.itens[' + i + '].valor=_cpNum(this.value);_cpEditorAtualizarUnit(' + i + ');_cpEditorTotal()" placeholder="0,00" inputmode="decimal" style="flex:0 0 82px;width:82px;padding:6px 7px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.8rem;font-weight:800;text-align:right">'
+      + '<input id="cp-ed-total-' + i + '" value="' + (it.valor ? String((+it.valor).toFixed(2)).replace('.', ',') : '') + '" oninput="_cpEdit.itens[' + i + '].valor=_cpNum(this.value);_cpEditorAtualizarUnit(' + i + ');_cpEditorTotal()" placeholder="0,00" inputmode="decimal" style="flex:0 0 82px;width:82px;padding:6px 7px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.8rem;font-weight:800;text-align:right">'
       + '<button onclick="_cpEdit.itens.splice(' + i + ',1);_cpEditorDesenhar()" style="flex:0 0 auto;border:none;background:transparent;cursor:pointer;font-size:1rem">✖</button>'
       + '</div>';
   });
@@ -11382,7 +11384,21 @@ window._cpEditorAtualizarUnit = function(i) {
   var unit = qtde > 0 ? _r2(total / qtde) : total;
   it.valor_unit = unit;
   var el = document.getElementById('cp-ed-unit-' + i);
-  if (el) { el.value = unit > 0 ? unit.toFixed(2).replace('.',',') : ''; el.style.color = 'var(--mu)'; }
+  if (el) { el.value = unit > 0 ? unit.toFixed(2) : ''; el.style.color = 'var(--mu)'; }
+};
+// Nova função: quando usuário digita o valor unitário, recalcula o total
+window._cpEditorAtualizarTotalFromUnit = function(i) {
+  var it = _cpEdit.itens[i]; if (!it) return;
+  var el = document.getElementById('cp-ed-unit-' + i);
+  var unit = el ? (parseFloat(el.value) || 0) : 0;
+  var qtde = parseFloat(it.qtde) || 1;
+  var total = _r2(unit * qtde);
+  it.valor_unit = unit;
+  it.valor = total;
+  // Atualizar campo total no DOM usando o id gerado
+  var elTotal = document.getElementById('cp-ed-total-' + i);
+  if (elTotal) elTotal.value = total > 0 ? total.toFixed(2).replace('.',',') : '';
+  _cpEditorTotal();
 };
 function _cpEditorTotal() {
   var s = 0; _cpEdit.itens.forEach(function(it) { s += parseFloat(it.valor) || 0; });
@@ -11815,10 +11831,11 @@ function _cpArquivoParaFoto(file) {
 function _cpPromptIA() {
   return 'Voce esta lendo a foto de um documento de compra de uma lanchonete de sucos no Brasil (cupom fiscal, nota fiscal, recibo, boleto ou conta). '
     + 'Extraia os dados e responda SOMENTE com JSON neste formato: '
-    + '{"fornecedor":"nome da loja ou empresa","data":"AAAA-MM-DD","total":0.00,"itens":[{"descricao":"texto","qtde":1,"valor_unit":0.00,"valor":0.00,"categoria":"nome exato","desconto":false}]}. '
+    + '{"fornecedor":"nome da loja ou empresa","data":"AAAA-MM-DD","total":0.00,"itens":[{"descricao":"texto","qtde":1,"unidade":"kg","valor_unit":0.00,"valor":0.00,"categoria":"nome exato","desconto":false}]}. '
     + 'Regras: '
     + 'liste cada produto comprado em uma linha de "itens"; '
     + '"qtde" e a quantidade comprada daquele item (numero, pode ser decimal para peso em kg); '
+    + '"unidade" e a unidade de medida do item (kg, g, L, mL, un, cx, fardo, pct, dz, etc); se nao aparecer use "un"; '
     + '"valor_unit" e o preco unitario do item ANTES de qualquer desconto geral do cupom (como aparece na nota); '
     + '"valor" e o valor TOTAL daquela linha (qtde x valor_unit), como numero com ponto decimal; '
     + 'se houver um item de desconto geral (linha escrita DESCONTO, DESCTO, ABATIMENTO, etc com valor negativo ou positivo), inclua-o com "desconto":true e "valor" sendo o valor absoluto do desconto (numero positivo); '
@@ -11899,6 +11916,7 @@ window.cpFotoEscolhida = function(inp) {
       var valorUnitLiq = qtde > 0 ? _r2(valorLiq / qtde) : valorLiq;
       return {
         desc: String(it.descricao || '').trim(),
+        unidade: String(it.unidade || it.un || it.unit_medida || '').trim(),
         valor: valorLiq,
         cat: _cpCatDoNome(it.categoria),
         qtde: qtde,
