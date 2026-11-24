@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.230</title>
+<title>Suco Laranjinha -- PDV v1.6.231</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -2288,7 +2288,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.230';
+var APP_VERSION = 'v1.6.231';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -11193,7 +11193,15 @@ window.dreLancarFaturamentoCaixa = function(abertoEm, fechadoEm) {
 var CP_KEY = 'slj_contas_pagar';
 var CP_IA_KEY = 'slj_gemini_key';      // fica só neste computador (não vai para a nuvem)
 var CP_IA_MODELO_KEY = 'slj_gemini_modelo';
-var CP_IA_MODELOS = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash'];
+var CP_IA_MODELOS = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+// Migrar modelo obsoleto para gemini-2.0-flash automaticamente
+(function() {
+  var modeloSalvo = localStorage.getItem('slj_gemini_modelo');
+  var obsoletos = ['gemini-2.5-flash','gemini-3.8-flash','gemini-3.5-flash','gemini-3.1-flash-lite','gemini-2.5-pro','gemini-1.0-pro'];
+  if (!modeloSalvo || obsoletos.indexOf(modeloSalvo) >= 0) {
+    localStorage.setItem('slj_gemini_modelo', 'gemini-2.0-flash');
+  }
+})();
 var _cpEdit = null;   // documento aberto no editor
 var _cpFotoPend = null; // foto ainda não salva {dataUrl, mime}
 
