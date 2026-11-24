@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.228</title>
+<title>Suco Laranjinha -- PDV v1.6.229</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -2288,7 +2288,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.228';
+var APP_VERSION = 'v1.6.229';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -11368,7 +11368,7 @@ function _cpEditorLinhas() {
       // Unidade de medida
       + '<input value="' + _cpEsc(it.unidade||'') + '" oninput="_cpEdit.itens[' + i + '].unidade=this.value" placeholder="un" title="Unidade de medida (kg, L, un, cx...)" style="flex:0 0 42px;width:42px;padding:6px 4px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--mu);font-size:0.72rem;text-align:center">'
       // Vlr Unit (editável - usuário pode digitar unit e total recalcula)
-      + '<input id="cp-ed-unit-' + i + '" type="number" min="0" step="0.01" value="' + (vlrUnit ? vlrUnit.toFixed(2) : '') + '" oninput="_cpEditorAtualizarTotalFromUnit(' + i + ')" placeholder="Unit" ' + descTip + ' inputmode="decimal" style="flex:0 0 72px;width:72px;padding:6px 6px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:' + (temDesc ? 'var(--g)' : 'var(--tx)') + ';font-size:0.78rem;text-align:right">'
+      + '<input id="cp-ed-unit-' + i + '" value="' + (vlrUnit ? vlrUnit.toFixed(2).replace('.',',') : '') + '" oninput="_cpEditorAtualizarTotalFromUnit(' + i + ')" placeholder="Vl.Unit" ' + descTip + ' inputmode="decimal" style="flex:0 0 72px;width:72px;padding:6px 6px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:' + (temDesc ? 'var(--g)' : 'var(--tx)') + ';font-size:0.78rem;text-align:right">'
       // Total
       + '<input id="cp-ed-total-' + i + '" value="' + (it.valor ? String((+it.valor).toFixed(2)).replace('.', ',') : '') + '" oninput="_cpEdit.itens[' + i + '].valor=_cpNum(this.value);_cpEditorAtualizarUnit(' + i + ');_cpEditorTotal()" placeholder="0,00" inputmode="decimal" style="flex:0 0 82px;width:82px;padding:6px 7px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.8rem;font-weight:800;text-align:right">'
       + '<button onclick="_cpEdit.itens.splice(' + i + ',1);_cpEditorDesenhar()" style="flex:0 0 auto;border:none;background:transparent;cursor:pointer;font-size:1rem">✖</button>'
@@ -11384,13 +11384,13 @@ window._cpEditorAtualizarUnit = function(i) {
   var unit = qtde > 0 ? _r2(total / qtde) : total;
   it.valor_unit = unit;
   var el = document.getElementById('cp-ed-unit-' + i);
-  if (el) { el.value = unit > 0 ? unit.toFixed(2) : ''; el.style.color = 'var(--mu)'; }
+  if (el) { el.value = unit > 0 ? unit.toFixed(2).replace('.',',') : ''; el.style.color = 'var(--mu)'; }
 };
 // Nova função: quando usuário digita o valor unitário, recalcula o total
 window._cpEditorAtualizarTotalFromUnit = function(i) {
   var it = _cpEdit.itens[i]; if (!it) return;
   var el = document.getElementById('cp-ed-unit-' + i);
-  var unit = el ? (parseFloat(el.value) || 0) : 0;
+  var unit = el ? (_cpNum(el.value) || 0) : 0;
   var qtde = parseFloat(it.qtde) || 1;
   var total = _r2(unit * qtde);
   it.valor_unit = unit;
