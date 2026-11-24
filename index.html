@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.224</title>
+<title>Suco Laranjinha -- PDV v1.6.225</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -2285,7 +2285,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.224';
+var APP_VERSION = 'v1.6.225';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -4148,24 +4148,29 @@ function run_ia_diag() {
         '<div style="margin-top:12px;width:40px;height:3px;background:var(--p);border-radius:2px;margin:12px auto;animation:pulse 1s infinite"></div>' +
         '</div>';
 
-    // Call Claude API
-    fetch('https://api.anthropic.com/v1/messages', {
+    // Usar chave Gemini configurada
+    var _iaKey = localStorage.getItem(CP_IA_KEY);
+    if (!_iaKey) {
+        render_ia_result('❌ Chave da IA não configurada. Vá em Configurações → Chave da IA (Google Gemini) e insira sua chave.', periodLabel, totalFat, totalLucro, mg);
+        return;
+    }
+    var _iaModelo = localStorage.getItem(CP_IA_MODELO_KEY) || CP_IA_MODELOS[0];
+
+    // Call Gemini API
+    fetch('https://generativelanguage.googleapis.com/v1beta/models/' + _iaModelo + ':generateContent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': _iaKey },
         body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 1000,
-            messages: [{ role: 'user', content: prompt }]
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
         })
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
         var text = '';
-        if (data.content && data.content[0] && data.content[0].text) {
-            text = data.content[0].text;
-        } else if (data.error) {
-            text = '❌ Erro da API: ' + data.error.message;
-        }
+        try { text = data.candidates[0].content.parts.map(function(p){return p.text||'';}).join(''); } catch(e) {}
+        if (!text && data.error) text = '❌ Erro da API: ' + data.error.message;
+        if (!text) text = '❌ Sem resposta da IA.';
         render_ia_result(text, periodLabel, totalFat, totalLucro, mg);
     })
     .catch(function(err) {
@@ -5006,18 +5011,26 @@ function preco_ia_diag(idx) {
     ];
     var prompt = lines.join('\n');
 
-    fetch('https://api.anthropic.com/v1/messages', {
+    var _piaKey = localStorage.getItem(CP_IA_KEY);
+    if (!_piaKey) {
+        box.innerHTML = '<div style="color:#EF4444;font-size:12px">❌ Chave da IA não configurada. Configure em Configurações → Chave da IA.</div>';
+        return;
+    }
+    var _piaModelo = localStorage.getItem(CP_IA_MODELO_KEY) || CP_IA_MODELOS[0];
+    fetch('https://generativelanguage.googleapis.com/v1beta/models/' + _piaModelo + ':generateContent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': _piaKey },
         body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 1000,
-            messages: [{ role: 'user', content: prompt }]
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
         })
     })
     .then(function(res){ return res.json(); })
     .then(function(data){
-        var text = data.content && data.content[0] ? data.content[0].text : (data.error ? 'Erro: ' + data.error.message : 'Sem resposta');
+        var text = '';
+        try { text = data.candidates[0].content.parts.map(function(p){return p.text||'';}).join(''); } catch(e) {}
+        if (!text && data.error) text = 'Erro: ' + data.error.message;
+        if (!text) text = 'Sem resposta';
         var htmlLines = text.split('\n');
         var html = '';
         htmlLines.forEach(function(line){
