@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.211</title>
+<title>Suco Laranjinha -- PDV v1.6.219</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -594,7 +594,9 @@ body.light-mode .hname{background:#F8FAFC !important}
   #pdv-mesa-label { font-size: 0.78rem !important; }
   #pdv-total-label { font-size: 1rem !important; }
   /* Todos botões do carrinho: altura mínima para toque */
-  .pdv-right button { min-height: 36px !important; font-size: 0.68rem !important; }
+  .pdv-right button { min-height: 32px !important; font-size: 0.6rem !important; }
+  /* Grade de ações: garante 3 colunas sem vazar */
+  .pdv-right .pdv-acoes-grade { grid-template-columns: 1fr 1fr 1fr !important; gap: 3px !important; }
   /* Itens do pedido */
   .pdv-item-linha .iname  { font-size: 0.58rem !important; }
   .pdv-item-linha .ipreco { font-size: 0.65rem !important; }
@@ -729,7 +731,7 @@ body.light-mode .hname{background:#F8FAFC !important}
 <div id="main">
   <div id="tb">
     <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-      <span class="tt" id="tb-title" style="white-space:nowrap">🖥️ PDV Caixa</span><span id="tb-versao" style="font-size:9px;font-family:monospace;background:var(--c2);color:var(--mu);padding:2px 7px;border-radius:5px;margin-left:6px;border:1px solid var(--bd)">v1.6.211</span>
+      <span class="tt" id="tb-title" style="white-space:nowrap">🖥️ PDV Caixa</span><span id="tb-versao" style="display:none"></span>
       <span class="tbg" id="tb-badge">Carregando...</span>
       <span id="fb-status" style="font-size:9px;font-family:monospace;color:#22C55E;margin-left:8px"></span>
       <span id="net-status" title="Status da conexão" style="font-size:10px;font-family:monospace;padding:2px 7px;border-radius:5px;margin-left:4px;border:1px solid var(--bd);background:var(--c2);cursor:default;transition:all .3s">🟢 Online</span>
@@ -1186,6 +1188,7 @@ body.light-mode .hname{background:#F8FAFC !important}
       <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;justify-content:flex-end">
         <button onclick="showPg('cozinha',this)" style="padding:3px 10px;border-radius:14px;border:1.5px solid var(--bd);background:transparent;color:var(--tx);font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap">🍳 Cozinha</button>
         <button onclick="showPg('contas',this)" style="padding:3px 10px;border-radius:14px;border:1.5px solid var(--bd);background:transparent;color:var(--tx);font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap">💳 Contas</button>
+        <button onclick="turnoFechar()" style="padding:3px 10px;border-radius:14px;border:1.5px solid var(--y);background:transparent;color:var(--y);font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap">🔄 Turno</button>
         <button onclick="toggleTheme()" title="Claro / Escuro" style="padding:3px 10px;border-radius:14px;border:1.5px solid var(--bd);background:var(--card);color:var(--tx);font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap">☀️ <span id="theme-lbl-inline">Claro</span></button>
       </div>
       <!-- Contador de Senhas -->
@@ -1244,63 +1247,58 @@ body.light-mode .hname{background:#F8FAFC !important}
         </div>
       </div>
 
-      <!-- Enviar para cozinha + Caixa + NF-e -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;flex-shrink:0">
+      <!-- Ações do pedido: grade 3x4 fixa, sem wrap, sem vazamento -->
+      <div class="pdv-acoes-grade" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;flex-shrink:0;overflow:hidden">
+        <!-- linha 1: Cozinha, Ver Caixa, NF-e -->
         <button onclick="pdvEnviarCozinha()"
-          style="padding:7px 2px;border-radius:8px;border:none;background:var(--o);color:#000;font-weight:700;font-size:0.7rem;cursor:pointer">
-          🔔 <span style="font-size:0.6rem;opacity:0.75">[F9]</span> Cozinha
+          style="padding:7px 2px;border-radius:8px;border:none;background:var(--o);color:#000;font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          🔔 Cozinha
         </button>
         <button id="btn-caixa" onclick="pdvBtnCaixa()"
-          style="padding:7px 2px;border-radius:8px;border:none;background:#16a34a;color:#fff;font-weight:700;font-size:0.7rem;cursor:pointer">
-          🏪 Abrir Cx
+          style="padding:7px 2px;border-radius:8px;border:none;background:#16a34a;color:#fff;font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          🏪 Ver Caixa
         </button>
         <button onclick="nfeAbrirModal()"
-          style="padding:7px 2px;border-radius:8px;border:1.5px solid var(--b);background:transparent;color:var(--b);font-weight:700;font-size:0.7rem;cursor:pointer"
-          title="Nota Fiscal Paulista">
+          style="padding:7px 2px;border-radius:8px;border:1.5px solid var(--b);background:transparent;color:var(--b);font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
           🧾 NF-e
         </button>
-      </div>
-
-      <!-- Formas de pagamento rápido -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;flex-shrink:0">
+        <!-- linha 2: Dinheiro, Crédito, Débito -->
         <button onclick="pdvPagarRapido('Dinheiro')"
-          style="padding:7px 2px;border-radius:8px;border:none;background:#16a34a;color:#fff;font-weight:700;font-size:0.7rem;cursor:pointer">
+          style="padding:7px 2px;border-radius:8px;border:none;background:#16a34a;color:#fff;font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
           💵 Dinheiro
         </button>
         <button onclick="pdvPagarRapido('Crédito')"
-          style="padding:7px 2px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-weight:700;font-size:0.7rem;cursor:pointer">
+          style="padding:7px 2px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
           💳 Crédito
         </button>
         <button onclick="pdvPagarRapido('Débito')"
-          style="padding:7px 2px;border-radius:8px;border:none;background:#7c3aed;color:#fff;font-weight:700;font-size:0.7rem;cursor:pointer">
+          style="padding:7px 2px;border-radius:8px;border:none;background:#7c3aed;color:#fff;font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
           💳 Débito
         </button>
+        <!-- linha 3: PIX, iFood, 99Food -->
         <button onclick="pdvPagarRapido('Pix')"
-          style="padding:7px 2px;border-radius:8px;border:none;background:#059669;color:#fff;font-weight:700;font-size:0.7rem;cursor:pointer">
+          style="padding:7px 2px;border-radius:8px;border:none;background:#059669;color:#fff;font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
           ⚡ PIX
         </button>
         <button onclick="pdvPagarRapido('iFood')"
-          style="padding:7px 2px;border-radius:8px;border:none;background:#ea580c;color:#fff;font-weight:700;font-size:0.7rem;cursor:pointer">
+          style="padding:7px 2px;border-radius:8px;border:none;background:#ea580c;color:#fff;font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
           🛵 iFood
         </button>
         <button onclick="pdvPagarRapido('99Food')"
-          style="padding:7px 2px;border-radius:8px;border:none;background:#6d28d9;color:#fff;font-weight:700;font-size:0.7rem;cursor:pointer">
+          style="padding:7px 2px;border-radius:8px;border:none;background:#6d28d9;color:#fff;font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
           🏍 99Food
         </button>
-      </div>
-
-      <!-- Imprimir + Ver + Cancelar -->
-      <div style="display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap">
+        <!-- linha 4: Imprimir, Ver Cupom, Cancelar -->
         <button onclick="pdvImprimir()"
-          style="flex:1;min-width:60px;padding:7px 4px;border-radius:9px;border:1.5px solid var(--b);background:transparent;color:var(--b);font-weight:700;font-size:0.72rem;cursor:pointer">
+          style="padding:7px 2px;border-radius:8px;border:1.5px solid var(--b);background:transparent;color:var(--b);font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
           🖨️ Imprimir
         </button>
         <button onclick="pdvVerCupom()"
-          style="flex:1;min-width:60px;padding:7px 4px;border-radius:9px;border:1.5px solid var(--g);background:transparent;color:var(--g);font-weight:700;font-size:0.72rem;cursor:pointer">
+          style="padding:7px 2px;border-radius:8px;border:1.5px solid var(--g);background:transparent;color:var(--g);font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
           👁️ Ver Cupom
         </button>
         <button onclick="pdvCancelarPedido()"
-          style="flex:1;min-width:60px;padding:7px 4px;border-radius:9px;border:1.5px solid var(--r);background:transparent;color:var(--r);font-weight:700;font-size:0.72rem;cursor:pointer">
+          style="padding:7px 2px;border-radius:8px;border:1.5px solid var(--r);background:transparent;color:var(--r);font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
           🗑️ Cancelar
         </button>
       </div>
@@ -1935,7 +1933,7 @@ body.light-mode .hname{background:#F8FAFC !important}
         <label style="font-size:0.68rem;color:var(--mu);font-weight:700">DATA DO DOCUMENTO<br><input id="cp-ed-data" type="date" style="padding:7px 10px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.82rem;margin-top:3px"></label>
         <label style="font-size:0.68rem;color:var(--mu);font-weight:700;flex:1 1 200px">FORNECEDOR<br><input id="cp-ed-forn" type="text" placeholder="Ex.: Supermercado" style="padding:7px 10px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.82rem;margin-top:3px;width:100%;box-sizing:border-box"></label>
       </div>
-      <div style="font-size:0.68rem;color:var(--mu);font-weight:700;margin-bottom:4px">ITEM · LINHA DO DRE · VALOR</div>
+      <div style="font-size:0.68rem;color:var(--mu);font-weight:700;margin-bottom:4px">ITEM · LINHA DO DRE · QTDE · VLR UNIT · TOTAL</div>
       <div id="cp-ed-linhas"></div>
       <button onclick="cpAddLinha()" style="padding:6px 12px;border-radius:8px;border:1.5px dashed var(--bd);background:transparent;color:var(--tx);font-weight:700;font-size:0.78rem;cursor:pointer">＋ Adicionar item</button>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--bd)">
@@ -2287,7 +2285,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.211';
+var APP_VERSION = 'v1.6.219';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -3315,6 +3313,23 @@ function dre_save(year, mi) {
         toast('⚠️ Nenhum valor preenchido em '+MF[mi]+'.', '#EAB308', 3000);
         return;
     }
+
+    // Marcar células de faturamento editadas manualmente (PDV não vai sobrescrever)
+    var fat_manual_lock = data.fat_manual_lock || {};
+    FAT_ITEMS.forEach(function(it) {
+        var k = slug(it);
+        if (!fat_manual_lock[k]) fat_manual_lock[k] = new Array(nD).fill(false);
+        for (var day = 1; day <= nD; day++) {
+            var v = data.fat_day[k] ? (data.fat_day[k][day-1] || 0) : 0;
+            // Se o usuário digitou algo (qualquer valor, incluindo 0 explícito), marca como manual
+            var inp_id = 'inp_'+year+'_fat_'+k+'_'+ day;
+            // Checa se o input existe e foi editado
+            var el = document.getElementById('inp_'+mi+'_fat_'+k+'_'+day);
+            var rawVal = _dreRaw['inp_'+mi+'_fat_'+k+'_'+day] || (el ? el.dataset.raw : '');
+            fat_manual_lock[k][day-1] = (rawVal !== '' && rawVal !== undefined && rawVal !== null);
+        }
+    });
+    data.fat_manual_lock = fat_manual_lock;
 
     // SALVAR
     var ok = db_set_month(year, mi, data);
@@ -6984,6 +6999,8 @@ function pdvConfirmarPagamento(){
   var _histEntry = {mesa:mesaLabel,mesaId:PDV.mesaAtual,itens:JSON.parse(JSON.stringify(lista)),total:total,forma:PDV.formaPag,hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),ts:Date.now()};
   if (_ePlat) { _histEntry.taxaPlat = _taxaPlat; _histEntry.taxaValor = _taxaValor; _histEntry.totalLiq = _totalLiq; }
   PDV.historico.push(_histEntry);
+  // Lança imediatamente no DRE
+  if (window._dreRegistrarVenda) _dreRegistrarVenda(_histEntry);
   // Se há itens não entregues na cozinha, mantém no KDS como pendente
   var itensPendentes=lista.filter(function(i){return (i.kdsQtFeito||0)<Math.max(1,parseInt(i.qty)||1);});
   if(itensPendentes.length){
@@ -8521,6 +8538,8 @@ window.pdvPagarRapido=function(forma){
   var _histEntry = {mesa:mesaLabel,mesaId:PDV.mesaAtual,itens:JSON.parse(JSON.stringify(lista)),total:total,forma:forma,hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),ts:Date.now()};
   if (_ePlat) { _histEntry.taxaPlat = _taxaPlat; _histEntry.taxaValor = _taxaValor; _histEntry.totalLiq = _totalLiq; }
   PDV.historico.push(_histEntry);
+  // Lan\u00e7a imediatamente no DRE
+  if (window._dreRegistrarVenda) _dreRegistrarVenda(_histEntry);
   // Se h\u00e1 itens n\u00e3o entregues na cozinha, mant\u00e9m no KDS como pendente
   var itensPendentes=lista.filter(function(i){return (i.kdsQtFeito||0)<Math.max(1,parseInt(i.qty)||1);});
   if(itensPendentes.length){
@@ -10915,6 +10934,31 @@ function _dreLinhaDaForma(forma) {
   if (f === 'CORTESIA') return null; // cortesia não é faturamento
   return slug('Outros Pagamentos');
 }
+// ---------- LANÇA UMA VENDA IMEDIATAMENTE NO DRE (chamado a cada pagamento) ----------
+window._dreRegistrarVenda = function(histEntry) {
+  try {
+    if (!histEntry || !histEntry.ts) return;
+    var linha = _dreLinhaDaForma(histEntry.forma);
+    if (!linha) return; // cortesia etc
+    var ehPlat = (histEntry.taxaPlat !== undefined);
+    var v = ehPlat && histEntry.totalLiq !== undefined ? histEntry.totalLiq : (histEntry.total || 0);
+    if (!(v > 0)) return;
+    var d2 = new Date(histEntry.ts);
+    var y = d2.getFullYear(), mi = d2.getMonth(), dia = d2.getDate();
+    var d = _dreMesEditavel(y, mi);
+    // Respeita edição manual: se o usuário digitou este dia manualmente, não sobrescreve
+    if (d.fat_manual_lock && d.fat_manual_lock[linha] && d.fat_manual_lock[linha][dia - 1]) {
+      console.log('[DRE] célula bloqueada por edição manual — venda não sobrescreve:', linha, 'dia', dia);
+      return;
+    }
+    if (!d.fat_day[linha]) d.fat_day[linha] = new Array(get_days(y, mi)).fill(0);
+    d.fat_day[linha][dia - 1] = _r2((d.fat_day[linha][dia - 1] || 0) + v);
+    db_set_month(y, mi, d);
+    _dreAposAlterar();
+    console.log('[DRE] venda registrada:', linha, 'dia', dia, '+R$', v.toFixed(2));
+  } catch(e) { console.warn('[DRE] erro ao registrar venda:', e); }
+};
+
 window.dreLancarFaturamentoCaixa = function(abertoEm, fechadoEm) {
   var hist = [];
   try { hist = (JSON.parse(localStorage.getItem('slj_pdv_state_v2') || '{}').historico) || []; } catch (e) {}
@@ -10940,6 +10984,8 @@ window.dreLancarFaturamentoCaixa = function(abertoEm, fechadoEm) {
     var p = dk.split('-'), y = +p[0], mi = +p[1], dia = +p[2];
     var d = _dreMesEditavel(y, mi);
     Object.keys(tot).forEach(function(linha) {
+      // Respeita edição manual do usuário: célula travada não é sobrescrita pelo PDV
+      if (d.fat_manual_lock && d.fat_manual_lock[linha] && d.fat_manual_lock[linha][dia - 1]) return;
       if (!d.fat_day[linha]) d.fat_day[linha] = new Array(get_days(y, mi)).fill(0);
       if (tot[linha] > 0) d.fat_day[linha][dia - 1] = _r2(tot[linha]);
     });
@@ -11116,16 +11162,38 @@ function _cpEditorLinhas() {
   var cats = _cpCats();
   var h = '';
   _cpEdit.itens.forEach(function(it, i) {
-    h += '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">'
-      + '<input value="' + _cpEsc(it.desc) + '" oninput="_cpEdit.itens[' + i + '].desc=this.value" placeholder="Item" style="flex:2 1 150px;min-width:0;padding:7px 8px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.8rem">'
-      + '<select onchange="_cpEdit.itens[' + i + '].cat=this.value" style="flex:1 1 130px;min-width:0;padding:7px 6px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.78rem">'
+    var qtde = it.qtde || 1;
+    var vlrUnit = it.valor_unit || 0;
+    var temDesc = it.desconto_item > 0;
+    // Tooltip de desconto aplicado
+    var descTip = temDesc ? ' title="Desconto rateado: -R$ ' + it.desconto_item.toFixed(2).replace('.',',') + ' | Bruto: R$ ' + (it.valor_unit_bruto||vlrUnit).toFixed(2).replace('.',',') + '"' : '';
+    h += '<div style="display:flex;gap:5px;align-items:center;margin-bottom:6px;flex-wrap:wrap">'
+      // Descrição
+      + '<input value="' + _cpEsc(it.desc) + '" oninput="_cpEdit.itens[' + i + '].desc=this.value" placeholder="Item" style="flex:2 1 120px;min-width:0;padding:6px 7px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.78rem">'
+      // Categoria
+      + '<select onchange="_cpEdit.itens[' + i + '].cat=this.value" style="flex:1 1 110px;min-width:0;padding:6px 5px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.74rem">'
       + cats.map(function(c) { return '<option value="' + c.v + '"' + (c.v === it.cat ? ' selected' : '') + '>' + _cpEsc(c.n) + '</option>'; }).join('') + '</select>'
-      + '<input value="' + (it.valor ? String((+it.valor).toFixed(2)).replace('.', ',') : '') + '" oninput="_cpEdit.itens[' + i + '].valor=_cpNum(this.value);_cpEditorTotal()" placeholder="0,00" inputmode="decimal" style="flex:0 0 90px;width:90px;padding:7px 8px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.82rem;font-weight:800;text-align:right">'
+      // Qtde
+      + '<input type="number" min="0" step="0.001" value="' + (qtde !== 1 ? qtde : '') + '" oninput="_cpEdit.itens[' + i + '].qtde=parseFloat(this.value)||1;_cpEditorAtualizarUnit(' + i + ')" placeholder="Qtde" inputmode="decimal" style="flex:0 0 60px;width:60px;padding:6px 6px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.78rem;text-align:right">'
+      // Vlr Unit (readonly, calculado)
+      + '<input id="cp-ed-unit-' + i + '" readonly value="' + (vlrUnit ? vlrUnit.toFixed(2).replace('.',',') : '') + '" placeholder="Unit" ' + descTip + ' style="flex:0 0 72px;width:72px;padding:6px 6px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:' + (temDesc ? 'var(--g)' : 'var(--mu)') + ';font-size:0.78rem;text-align:right;cursor:default">'
+      // Total
+      + '<input value="' + (it.valor ? String((+it.valor).toFixed(2)).replace('.', ',') : '') + '" oninput="_cpEdit.itens[' + i + '].valor=_cpNum(this.value);_cpEditorAtualizarUnit(' + i + ');_cpEditorTotal()" placeholder="0,00" inputmode="decimal" style="flex:0 0 82px;width:82px;padding:6px 7px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.8rem;font-weight:800;text-align:right">'
       + '<button onclick="_cpEdit.itens.splice(' + i + ',1);_cpEditorDesenhar()" style="flex:0 0 auto;border:none;background:transparent;cursor:pointer;font-size:1rem">✖</button>'
       + '</div>';
   });
   return h;
 }
+// Recalcula valor unitário quando qtde ou total mudam
+window._cpEditorAtualizarUnit = function(i) {
+  var it = _cpEdit.itens[i]; if (!it) return;
+  var qtde = parseFloat(it.qtde) || 1;
+  var total = parseFloat(it.valor) || 0;
+  var unit = qtde > 0 ? _r2(total / qtde) : total;
+  it.valor_unit = unit;
+  var el = document.getElementById('cp-ed-unit-' + i);
+  if (el) { el.value = unit > 0 ? unit.toFixed(2).replace('.',',') : ''; el.style.color = 'var(--mu)'; }
+};
 function _cpEditorTotal() {
   var s = 0; _cpEdit.itens.forEach(function(it) { s += parseFloat(it.valor) || 0; });
   var el = document.getElementById('cp-ed-total'); if (el) el.textContent = _cpMoney(s);
@@ -11452,13 +11520,29 @@ function _cpArquivoParaFoto(file) {
 function _cpPromptIA() {
   return 'Voce esta lendo a foto de um documento de compra de uma lanchonete de sucos no Brasil (cupom fiscal, nota fiscal, recibo, boleto ou conta). '
     + 'Extraia os dados e responda SOMENTE com JSON neste formato: '
-    + '{"fornecedor":"nome da loja ou empresa","data":"AAAA-MM-DD","total":0.00,"itens":[{"descricao":"texto","valor":0.00,"categoria":"nome exato"}]}. '
-    + 'Regras: liste cada produto comprado em uma linha de "itens"; "valor" e o valor TOTAL daquela linha (quantidade x preco unitario, ja com desconto do item), como numero com ponto decimal; '
-    + 'nao inclua linhas de subtotal, troco, forma de pagamento ou impostos informativos; se o documento for uma conta ou boleto sem itens, crie um unico item com o valor total; '
-    + '"total" e o valor total pago no documento; "data" e a data da compra (vazio se nao aparecer); '
+    + '{"fornecedor":"nome da loja ou empresa","data":"AAAA-MM-DD","total":0.00,"itens":[{"descricao":"texto","qtde":1,"valor_unit":0.00,"valor":0.00,"categoria":"nome exato","desconto":false}]}. '
+    + 'Regras: '
+    + 'liste cada produto comprado em uma linha de "itens"; '
+    + '"qtde" e a quantidade comprada daquele item (numero, pode ser decimal para peso em kg); '
+    + '"valor_unit" e o preco unitario do item ANTES de qualquer desconto geral do cupom (como aparece na nota); '
+    + '"valor" e o valor TOTAL daquela linha (qtde x valor_unit), como numero com ponto decimal; '
+    + 'se houver um item de desconto geral (linha escrita DESCONTO, DESCTO, ABATIMENTO, etc com valor negativo ou positivo), inclua-o com "desconto":true e "valor" sendo o valor absoluto do desconto (numero positivo); '
+    + 'nao inclua linhas de subtotal, troco, forma de pagamento ou impostos informativos; '
+    + 'se o documento for uma conta ou boleto sem itens, crie um unico item com o valor total; '
+    + '"total" e o valor total pago no documento (ja com descontos abatidos); "data" e a data da compra (vazio se nao aparecer); '
     + '"categoria" deve ser EXATAMENTE um destes nomes, o que melhor descreve o item: '
     + VAR_ITEMS.concat(FIX_ITEMS).join(' | ') + '. '
-    + 'Use "Mercado" para alimentos e compras gerais de supermercado, "Polpas" para polpas de fruta, "Laranja" para laranjas, "Embalagem" para copos, tampas, canudos e sacolas, "Produto limpeza" para limpeza. '
+    + 'Guia de categorias (use EXATAMENTE o nome listado acima): '
+    + '"Horta" = verduras e legumes frescos in natura: alface, couve, espinafre, cenoura, beterraba, chuchu, abobrinha, tomate, pepino, pimentao, cebola, alho, gengibre, salsa, cebolinha, hortela, rucula, agriao, repolho, batata, inhame, limao, e qualquer outra verdura ou legume ou fruta fresca in natura nao listada; '
+    + '"Laranja" = apenas laranjas; '
+    + '"Polpas" = polpas de fruta congeladas, acai, morango congelado; '
+    + '"Mercado" = alimentos industrializados, laticinios (leite, queijo, iogurte, manteiga, creme de leite, leite condensado), ovos, frios, embutidos, graos, farinha, acucar, oleo, arroz, feijao, massas, enlatados, temperos, bebidas, agua de coco, refrigerante, achocolatado, cafe, e compras gerais de supermercado; '
+    + '"Salgados" = salgados congelados para revenda (coxinha, kibe, risoles, porcao, etc); '
+    + '"Embalagem" = copos descartaveis, tampas, canudos, sacolas, bandejas, embalagens para alimentos; '
+    + '"Produto limpeza" = detergente, desinfetante, alcool, agua sanitaria, sabao, esponja, papel toalha, papel higienico, luva; '
+    + '"Gelo 5kg" = gelo; "Agua 500ml" = agua mineral em garrafa ou garrafao; '
+    + '"Utensilios" = utensilios de cozinha, panelas, facas, liquidificador, equipamentos; '
+    + 'Regra de ouro: produto in natura fresco (nao industrializado) = "Horta"; industrializado ou processado = "Mercado". '
     + 'Se nao conseguir ler o documento, responda {"fornecedor":"","data":"","total":0,"itens":[]}.';
 }
 function _cpChamarIA(foto, modelos, i, prompt) {
@@ -11500,8 +11584,33 @@ window.cpFotoEscolhida = function(inp) {
   var fotoLida;
   _cpArquivoParaFoto(file).then(function(foto) { fotoLida = foto; return _cpChamarIA(foto, modelos, 0); }).then(function(obj) {
     ov.style.display = 'none';
-    var itens = (Array.isArray(obj.itens) ? obj.itens : []).map(function(it) {
-      return { desc: String(it.descricao || '').trim(), valor: _r2(parseFloat(it.valor) || 0), cat: _cpCatDoNome(it.categoria) };
+    var itensRaw = (Array.isArray(obj.itens) ? obj.itens : []);
+    // Separar itens de desconto geral
+    var itensDesconto = itensRaw.filter(function(it) { return it.desconto === true; });
+    var itensProdutos = itensRaw.filter(function(it) { return it.desconto !== true; });
+    var totalDesconto = itensDesconto.reduce(function(s, it) { return s + (Math.abs(parseFloat(it.valor)) || 0); }, 0);
+    // Calcular total dos produtos para rateio proporcional
+    var totalProd = itensProdutos.reduce(function(s, it) { return s + (parseFloat(it.valor) || 0); }, 0);
+    var itens = itensProdutos.map(function(it) {
+      var valorBruto = _r2(parseFloat(it.valor) || 0);
+      var qtde = parseFloat(it.qtde) || 1;
+      var valorUnit = parseFloat(it.valor_unit) || (qtde > 0 ? _r2(valorBruto / qtde) : valorBruto);
+      // Rateio do desconto proporcional ao peso do item no total
+      var descontoItem = 0;
+      if (totalDesconto > 0 && totalProd > 0) {
+        descontoItem = _r2(totalDesconto * (valorBruto / totalProd));
+      }
+      var valorLiq = _r2(valorBruto - descontoItem);
+      var valorUnitLiq = qtde > 0 ? _r2(valorLiq / qtde) : valorLiq;
+      return {
+        desc: String(it.descricao || '').trim(),
+        valor: valorLiq,
+        cat: _cpCatDoNome(it.categoria),
+        qtde: qtde,
+        valor_unit: valorUnitLiq,
+        valor_unit_bruto: valorUnit,
+        desconto_item: descontoItem
+      };
     }).filter(function(it) { return it.desc || it.valor; });
     _cpFotoPend = fotoLida;
     var data = /^\d{4}-\d{2}-\d{2}$/.test(obj.data || '') ? obj.data : _cpHoje();
