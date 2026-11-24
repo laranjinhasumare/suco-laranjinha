@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.219</title>
+<title>Suco Laranjinha -- PDV v1.6.220</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -2285,7 +2285,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.219';
+var APP_VERSION = 'v1.6.220';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -11337,6 +11337,106 @@ function _cpEstqAplicar() {
   _cpEstqLinhas = [];
 }
 
+// ----- Atualização automática do Estoque Valorizado ao salvar CP -----
+var _CP_CAT_GRUPO = {
+  'var|horta':     ['FRUTAS, VERDURAS', 'LANCHE', 'HORTA'],
+  'var|mercado':   ['FRUTAS, VERDURAS', 'LANCHE', 'MERCADO'],
+  'var|limpeza':   ['MATERIAIS', 'LIMPEZA', 'DESCARTAVEIS'],
+  'var|embalagem': ['MATERIAIS', 'EMBALAGEM', 'DESCARTAVEIS'],
+  'var|polpas':    ['POLPAS'],
+  'var|salgados':  ['SALGADOS'],
+  'var|alimentos': ['LANCHE', 'FRUTAS', 'MERCEARIA'],
+};
+function _estNorm(s) {
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim();
+}
+function _estBuscarItem(nomeCP, key) {
+  var n = _estNorm(nomeCP);
+  if (!n || n.length < 2) return null;
+  if (!key) {
+    var ks = Object.keys(ESTOQUE_DATA).sort();
+    if (!ks.length) return null;
+    key = ks[ks.length - 1];
+  }
+  var est = ESTOQUE_DATA[key];
+  if (!est || !est.grupos) return null;
+  var melhor = null, melhorScore = 0;
+  for (var gi = 0; gi < est.grupos.length; gi++) {
+    var itens = est.grupos[gi].itens || [];
+    for (var ii = 0; ii < itens.length; ii++) {
+      var nomeEst = _estNorm(itens[ii].item);
+      var score = 0;
+      if (nomeEst === n) { score = 100; }
+      else if (nomeEst.indexOf(n) >= 0 && n.length >= 3) { score = 80; }
+      else if (n.indexOf(nomeEst) >= 0 && nomeEst.length >= 3) { score = 70; }
+      else {
+        var pw = n.split(/\s+/).filter(function(p){ return p.length >= 3; });
+        if (pw.length && pw.every(function(p){ return nomeEst.indexOf(p) >= 0; })) score = 60;
+        var pe = nomeEst.split(/\s+/).filter(function(p){ return p.length >= 3; });
+        if (pe.length && pe.every(function(p){ return n.indexOf(p) >= 0; })) score = Math.max(score, 50);
+      }
+      if (score > melhorScore) { melhorScore = score; melhor = { key: key, gi: gi, ii: ii }; }
+    }
+  }
+  return melhorScore >= 50 ? melhor : null;
+}
+function _estGrupoParaCat(cat, key) {
+  var est = ESTOQUE_DATA[key];
+  if (!est || !est.grupos) return 0;
+  var hints = _CP_CAT_GRUPO[cat] || ['FRUTAS'];
+  for (var gi = 0; gi < est.grupos.length; gi++) {
+    var ng = _estNorm(est.grupos[gi].nome);
+    if (hints.some(function(h){ return ng.indexOf(_estNorm(h)) >= 0; })) return gi;
+  }
+  return est.grupos.length - 1;
+}
+function _cpEstqValorizadoAplicar(itens, dataDoc) {
+  if (!itens || !itens.length) return;
+  var d = new Date(dataDoc + 'T12:00:00');
+  var key = d.getFullYear() + '_' + d.getMonth();
+  if (!ESTOQUE_DATA[key]) {
+    var ks = Object.keys(ESTOQUE_DATA).sort();
+    if (!ks.length) return;
+    key = ks[ks.length - 1];
+  }
+  var alterou = false, novos = [], atualizados = [];
+  itens.forEach(function(it) {
+    var desc = String(it.desc || '').trim();
+    if (!desc || !(it.valor > 0)) return;
+    var qtde = parseFloat(it.qtde) || 1;
+    var preco = (it.valor_unit > 0) ? _r2(it.valor_unit) : (qtde > 0 ? _r2(it.valor / qtde) : _r2(it.valor));
+    var encontrado = _estBuscarItem(desc, key);
+    var now = new Date();
+    var dtStr = now.getDate().toString().padStart(2,'0')+'/'+(now.getMonth()+1).toString().padStart(2,'0')+' '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+    if (encontrado) {
+      var item = ESTOQUE_DATA[encontrado.key].grupos[encontrado.gi].itens[encontrado.ii];
+      item.qtd = _r2((item.qtd || 0) + qtde);
+      item.preco = _r2(preco);
+      item.subtotal = _r2(item.qtd * item.preco);
+      item.updated = dtStr;
+      atualizados.push(item.item);
+      alterou = true;
+    } else {
+      var gi = _estGrupoParaCat(it.cat || 'var|mercado', key);
+      ESTOQUE_DATA[key].grupos[gi].itens.push({ item: desc, unidade: 'un', qtd: qtde, preco: _r2(preco), subtotal: _r2(qtde * preco), obs: 'Criado via Contas a Pagar', updated: dtStr });
+      novos.push(desc);
+      alterou = true;
+    }
+  });
+  if (alterou) {
+    var grand = 0;
+    (ESTOQUE_DATA[key].grupos || []).forEach(function(g){ (g.itens || []).forEach(function(x){ grand += (x.subtotal || 0); }); });
+    ESTOQUE_DATA[key].total = _r2(grand);
+    est_save_auto(key);
+    var msg = '';
+    if (atualizados.length) msg += '📦 Estoque: ' + atualizados.slice(0,3).join(', ') + (atualizados.length > 3 ? ' +' + (atualizados.length-3) : '');
+    if (novos.length) msg += (msg ? ' | ' : '') + '➕ ' + novos.length + ' item(ns) novo(s)';
+    if (msg) setTimeout(function(){ SLJ_TOAST(msg, 'g'); }, 1600);
+    console.log('[Estoque] CP→valorizado: atualizados', atualizados, '| novos', novos);
+  }
+}
+// --- fim atualização automática estoque ---
+
 // Modal de busca de insumo para CP (igual ao da receita, mas para _cpEstqLinhas[idx])
 window._cpEstqBuscaIdx = null;
 
@@ -11452,8 +11552,12 @@ window.cpSalvarEditor = function() {
   if (!_cpEdit) return;
   var data = document.getElementById('cp-ed-data').value;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) { SLJ_TOAST('Informe a data do documento', 'r'); return; }
-  var itens = _cpEdit.itens.map(function(it) { return { desc: String(it.desc || '').trim(), valor: _r2(parseFloat(it.valor) || 0), cat: it.cat || 'var|mercado' }; })
-    .filter(function(it) { return it.valor > 0; });
+  var itens = _cpEdit.itens.map(function(it) {
+    var obj = { desc: String(it.desc || '').trim(), valor: _r2(parseFloat(it.valor) || 0), cat: it.cat || 'var|mercado' };
+    if (it.qtde && parseFloat(it.qtde) > 0) obj.qtde = parseFloat(it.qtde);
+    if (it.valor_unit && parseFloat(it.valor_unit) > 0) obj.valor_unit = parseFloat(it.valor_unit);
+    return obj;
+  }).filter(function(it) { return it.valor > 0; });
   if (!itens.length) { SLJ_TOAST('Informe pelo menos um item com valor', 'r'); return; }
   var arr = cpLoad();
   var novo = { id: _cpEdit.id || Date.now(), data: data, fornecedor: document.getElementById('cp-ed-forn').value.trim(), itens: itens, foto: !!(_cpEdit.foto || _cpFotoPend) };
@@ -11466,7 +11570,8 @@ window.cpSalvarEditor = function() {
   cpSave(arr);
   if (_cpFotoPend) cpFotoSalvar(novo.id, _cpFotoPend).catch(function() {});
   var total = itens.reduce(function(s, it) { return s + it.valor; }, 0);
-  _cpEstqAplicar(); // Aplicar entradas de estoque real
+  _cpEstqAplicar(); // Aplicar entradas de estoque real (insumos)
+  _cpEstqValorizadoAplicar(itens, data); // Atualizar estoque valorizado automaticamente
   cpFecharEditor();
   var mesEl = document.getElementById('cp-mes'); if (mesEl) mesEl.value = data.slice(0, 7);
   cpRender();
