@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.223</title>
+<title>Suco Laranjinha -- PDV v1.6.224</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -2285,7 +2285,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.223';
+var APP_VERSION = 'v1.6.224';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -2417,7 +2417,9 @@ function db_init_seeds() {
         }
     });
     if (changed) {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(saved)); if (window._fbSet) window._fbSet(saved).catch(function(){}); } catch(e) {}
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(saved)); } catch(e) {}
+        // Não sincroniza com Firebase aqui — Firebase ainda não inicializou neste momento
+        // O Firebase carrega os dados reais logo após e sobrescreve o seed
     }
 
     // Seed de insumos: se ainda não existir nenhum, importar do ESTOQUE_DATA
@@ -5253,8 +5255,23 @@ get(ref(db, 'slj')).then(function(snap) {
                 } catch(e) {}
             }
 
-            // Re-render current page
+            // Re-render todas as telas após Firebase carregar
             if (window.render_dash) render_dash();
+            // Re-render página ativa com dados do Firebase
+            try {
+                var _fbActivePg = document.querySelector('.pg.active');
+                if (_fbActivePg) {
+                    var _fbPgId = _fbActivePg.id.replace('pg-', '');
+                    if (_fbPgId === 'dre-mes' && window.build_dre_mes) build_dre_mes();
+                    else if (_fbPgId === 'dre' && window.render_dre_cons) render_dre_cons();
+                    else if (_fbPgId === 'contas' && window.contasFiltrar) contasFiltrar();
+                    else if (_fbPgId === 'custos' && window.custosFiltrar) custosFiltrar();
+                    else if (_fbPgId === 'estoque' && window.renderEstoque) renderEstoque();
+                    else if (_fbPgId === 'insumos' && window.insumoRender) insumoRender();
+                    else if (_fbPgId === 'receitas' && window.receitaRender) receitaRender();
+                    else if (_fbPgId === 'fornecedores' && window.fornRender) fornRender();
+                }
+            } catch(e) {}
             // Reconstrói PDV.historico a partir dos turnos e recarrega telas
             setTimeout(function() {
                 try {
