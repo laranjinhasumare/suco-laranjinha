@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.221</title>
+<title>Suco Laranjinha -- PDV v1.6.223</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -2285,7 +2285,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.221';
+var APP_VERSION = 'v1.6.223';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -2417,7 +2417,7 @@ function db_init_seeds() {
         }
     });
     if (changed) {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(saved)); } catch(e) {}
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(saved)); if (window._fbSet) window._fbSet(saved).catch(function(){}); } catch(e) {}
     }
 
     // Seed de insumos: se ainda não existir nenhum, importar do ESTOQUE_DATA
@@ -2620,6 +2620,7 @@ window.cfgAlterarSenhaFinanceiro = function() {
   if (atual !== getSenhaFinanceiro()) { setMsg('❌ Senha atual incorreta.', 'var(--r)'); return; }
   if (!nova || nova.length < 4) { setMsg('❌ Nova senha precisa ter pelo menos 4 caracteres.', 'var(--r)'); return; }
   localStorage.setItem(SLJ_SENHA_FIN_KEY, nova);
+  if (window._fbSyncExtra) window._fbSyncExtra('slj_senha_financeiro', nova);
   _financeiroDesbloqueado = false; // força re-autenticação
   document.getElementById('cfg-senha-fin-atual').value = '';
   document.getElementById('cfg-senha-fin-nova').value  = '';
@@ -3978,7 +3979,7 @@ function disc_save_meta(el) {
     var metas = {};
     try { metas = JSON.parse(localStorage.getItem(metaKey)||'{}'); } catch(e) {}
     metas[tipo+'_'+mi] = val;
-    try { localStorage.setItem(metaKey, JSON.stringify(metas)); } catch(e) {}
+    try { localStorage.setItem(metaKey, JSON.stringify(metas)); if (window._fbSyncExtra) window._fbSyncExtra(metaKey, metas); } catch(e) {}
     // Also update IDEAL for chart
     if (tipo==='fat') IDEAL.fat[parseInt(mi)] = val;
     else IDEAL.gst[parseInt(mi)] = val;
@@ -4017,7 +4018,9 @@ function toggleTheme() {
     if (lbl) lbl.textContent = isLight ? 'Escuro' : 'Claro';
     var lbli = document.getElementById('theme-lbl-inline');
     if (lbli) lbli.textContent = isLight ? 'Escuro' : 'Claro';
-    localStorage.setItem('slj_theme', isLight ? 'light' : 'dark');
+    var themeVal = isLight ? 'light' : 'dark';
+    localStorage.setItem('slj_theme', themeVal);
+    if (window._fbSyncExtra) window._fbSyncExtra('slj_theme', themeVal);
 }
 
 // ============================================================
@@ -5108,6 +5111,28 @@ onValue(ref(db, 'slj/pdv'), function(snap) {
 
 window._fbReady = true;
 
+// ── Listener em tempo real: Contas a Pagar ───────────────────
+var _fbCPIgnoreNext = false;
+onValue(ref(db, 'slj/contas_pagar'), function(snap) {
+    if (_fbCPIgnoreNext) { _fbCPIgnoreNext = false; return; }
+    if (!snap.exists()) return;
+    try {
+        var remote = snap.val();
+        if (!Array.isArray(remote)) remote = Object.keys(remote).map(function(k){ return remote[k]; });
+        remote = remote.filter(function(x){ return x; });
+        remote.forEach(function(x){ if (x.itens && !Array.isArray(x.itens)) x.itens = Object.keys(x.itens).map(function(k){ return x.itens[k]; }); });
+        localStorage.setItem('slj_contas_pagar', JSON.stringify(remote));
+        if (typeof cpRender === 'function') cpRender();
+    } catch(e) {}
+});
+
+// Interceptar cpSave para marcar que o próximo disparo do listener é local
+var _cpSaveOrigFb = window._fbSetContasPagar;
+window._fbSetContasPagar = function(data) {
+    _fbCPIgnoreNext = true;
+    return _cpSaveOrigFb(data);
+};
+
 // ── Processar fila offline acumulada ─────────────────────────
 window._fbProcessarFila = function() {
     if (!window.SLJ_OFFLINE) return;
@@ -5191,9 +5216,16 @@ get(ref(db, 'slj')).then(function(snap) {
             // Carregar extras (config, cats, receitas, etc)
             if (fbData.extras) {
                 try {
-                    var extraKeys = ['slj_config','slj_cats','slj_cats_excluidas','slj_receitas','slj_insumos','slj_estq_real','slj_nfe_cfg','slj_theme','slj_senha_num','slj_senha_ultima','slj_caixa_status','slj_turnos_historico'];
+                    var extraKeys = ['slj_config','slj_cats','slj_cats_excluidas','slj_receitas','slj_insumos','slj_estq_real','slj_nfe_cfg','slj_theme','slj_senha_num','slj_senha_ultima','slj_caixa_status','slj_turnos_historico','slj_unidades','slj_fornecedores','slj_cp_cat_forn','slj_senha_financeiro'];
                     extraKeys.forEach(function(ek) {
                         if (fbData.extras[ek] !== undefined) {
+                            var v = fbData.extras[ek];
+                            localStorage.setItem(ek, typeof v === 'string' ? v : JSON.stringify(v));
+                        }
+                    });
+                    // Carregar metas por ano (chaves dinâmicas slj_metas_YYYY)
+                    Object.keys(fbData.extras).forEach(function(ek) {
+                        if (/^slj_metas_\d{4}$/.test(ek)) {
                             var v = fbData.extras[ek];
                             localStorage.setItem(ek, typeof v === 'string' ? v : JSON.stringify(v));
                         }
@@ -6670,6 +6702,7 @@ function _pdvChamarSenhaAuto(id) {
   var num = parseInt(localStorage.getItem(SENHA_KEY) || '1', 10);
   localStorage.setItem(SENHA_KEY, String(num + 1));
   localStorage.setItem(SENHA_ULTIMA_KEY, String(num));
+  if (window._fbSyncExtra) { window._fbSyncExtra('slj_senha_num', String(num + 1)); window._fbSyncExtra('slj_senha_ultima', String(num)); }
   if (!PDV.senhas) PDV.senhas = {};
   PDV.senhas[id] = num;
   var el = document.getElementById('pdv-senha-num');
@@ -7381,7 +7414,7 @@ function umGetAll() {
     return (saved && saved.length) ? saved : UM_PADRAO.slice();
   } catch(e) { return UM_PADRAO.slice(); }
 }
-function umSaveAll(arr) { localStorage.setItem(UM_KEY, JSON.stringify(arr)); }
+function umSaveAll(arr) { localStorage.setItem(UM_KEY, JSON.stringify(arr)); if (window._fbSyncExtra) window._fbSyncExtra('slj_unidades', arr); }
 
 window.umAbrir = function() {
   var modal = document.getElementById('modal-unidades');
@@ -7427,6 +7460,7 @@ function receitaGetAll() {
 }
 function receitaSaveAll(db) {
   localStorage.setItem(RECEITAS_KEY, JSON.stringify(db));
+  if (window._fbSyncExtra) window._fbSyncExtra('slj_receitas', db);
 }
 
 window.receitaToggle = function(cod) {
@@ -7758,6 +7792,7 @@ function insumoImportarDeEstoqueValorizado() {
 
     var todos = existentes.concat(novos);
     localStorage.setItem(INSUMOS_KEY, JSON.stringify(todos));
+    if (window._fbSyncExtra) window._fbSyncExtra('slj_insumos', todos);
 
     // Garantir entrada no estoque real (zerado) para os novos
     var estq = {};
@@ -7766,6 +7801,7 @@ function insumoImportarDeEstoqueValorizado() {
       if (!(ins.id in estq)) estq[ins.id] = 0;
     });
     localStorage.setItem(ESTQ_REAL_KEY, JSON.stringify(estq));
+    if (window._fbSyncExtra) window._fbSyncExtra('slj_estq_real', estq);
 
     return novos.length;
   } catch(e) { return 0; }
@@ -8570,7 +8606,11 @@ function _turnoGetHist() {
   try { return JSON.parse(localStorage.getItem(TURNOS_KEY) || '[]'); } catch(e) { return []; }
 }
 function _turnoSaveHist(arr) {
-  try { localStorage.setItem(TURNOS_KEY, JSON.stringify(arr.slice(-50))); } catch(e) {}
+  try {
+    var corte = arr.slice(-50);
+    localStorage.setItem(TURNOS_KEY, JSON.stringify(corte));
+    if (window._fbSyncExtra) window._fbSyncExtra('slj_turnos_historico', corte);
+  } catch(e) {}
 }
 function _turnoFmtMoney(v) {
   return 'R$ ' + (v||0).toFixed(2).replace('.',',');
@@ -8857,10 +8897,12 @@ window.cfgSalvar = function() {
       emailFechamento: (el('cfg-email-fechamento') ? el('cfg-email-fechamento').value.trim() : '')
     };
     localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+    if (window._fbSyncExtra) window._fbSyncExtra('slj_config', cfg);
     // Sincroniza impressora com servidor local se estiver rodando
     srvSalvarConfig(cfg.impressora);
     var proxSenha = parseInt(el('cfg-proxima-senha').value) || 1;
     localStorage.setItem(SENHA_KEY, String(proxSenha));
+    if (window._fbSyncExtra) window._fbSyncExtra('slj_senha_num', String(proxSenha));
     alert('Configuracoes salvas!');
   } catch(e) { alert('Erro ao salvar: ' + e.message); }
 };
@@ -8912,7 +8954,9 @@ window.cfgEnviarFirebase = async function() {
     // Config, cats, receitas, nfe_cfg via node separado
     if (window._fbSetExtras) {
       var extras = {};
-      var extraKeys = ['slj_config','slj_cats','slj_cats_excluidas','slj_receitas','slj_insumos','slj_estq_real','slj_nfe_cfg','slj_theme','slj_senha_num','slj_senha_ultima','slj_caixa_status','slj_turnos_historico'];
+      var extraKeys = ['slj_config','slj_cats','slj_cats_excluidas','slj_receitas','slj_insumos','slj_estq_real','slj_nfe_cfg','slj_theme','slj_senha_num','slj_senha_ultima','slj_caixa_status','slj_turnos_historico','slj_unidades','slj_fornecedores','slj_cp_cat_forn','slj_senha_financeiro'];
+      // Adicionar metas por ano (chaves dinâmicas)
+      for (var _i = 0; _i < localStorage.length; _i++) { var _k = localStorage.key(_i); if (_k && /^slj_metas_\d{4}$/.test(_k)) extraKeys.push(_k); }
       extraKeys.forEach(function(ek) {
         var v = localStorage.getItem(ek);
         if (v) { try { extras[ek] = JSON.parse(v); } catch(e) { extras[ek] = v; } }
@@ -8992,6 +9036,7 @@ window.cfgResetarSenha = function() {
   if (confirm('Zerar contador de senhas para 1?')) {
     localStorage.setItem(SENHA_KEY, '1');
     localStorage.removeItem(SENHA_ULTIMA_KEY);
+    if (window._fbSyncExtra) { window._fbSyncExtra('slj_senha_num', '1'); window._fbSyncExtra('slj_senha_ultima', null); }
     PDV.senhas = {};
     pdvSalvar();
     var el = document.getElementById('cfg-proxima-senha');
@@ -9348,6 +9393,7 @@ window.pdvProximaSenha = function() {
   // Salvar como próxima e como última chamada
   localStorage.setItem(SENHA_KEY, String(num + 1));
   localStorage.setItem(SENHA_ULTIMA_KEY, String(num));
+  if (window._fbSyncExtra) { window._fbSyncExtra('slj_senha_num', String(num + 1)); window._fbSyncExtra('slj_senha_ultima', String(num)); }
   // Vincular senha à mesa/fila ativa
   if (PDV.mesaAtual !== undefined && PDV.mesaAtual !== null) {
     PDV.senhas[PDV.mesaAtual] = num;
@@ -9364,6 +9410,7 @@ window.pdvResetarSenha = function() {
   if (confirm('Zerar contador de senhas para 1?')) {
     localStorage.setItem(SENHA_KEY, '1');
     localStorage.removeItem(SENHA_ULTIMA_KEY);
+    if (window._fbSyncExtra) { window._fbSyncExtra('slj_senha_num', '1'); window._fbSyncExtra('slj_senha_ultima', null); }
     PDV.senhas = {};
     pdvSalvar();
     pdvRenderSenha();
@@ -9375,6 +9422,11 @@ function cfgGetConfig() {
   try {
     return JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
   } catch(e) { return {}; }
+}
+
+function nfeCfgSave(cfg) {
+  localStorage.setItem(NFE_CFG_KEY, JSON.stringify(cfg));
+  if (window._fbSyncExtra) window._fbSyncExtra('slj_nfe_cfg', cfg);
 }
 
 // ============================================================
@@ -9542,7 +9594,7 @@ function nfeGerarNota(cpfCnpj) {
 
   // Modo simulado (sem Worker configurado)
   cfg.numero = String(num + 1);
-  localStorage.setItem(NFE_CFG_KEY, JSON.stringify(cfg));
+  nfeCfgSave(cfg);
   var chave = nfeGerarChave(cfg, serie, num, total);
   nfeExibirCupom(cfg, chave, cpfCnpj, serie, num, total, lista, '(SIMULADO)');
 }
@@ -9569,7 +9621,7 @@ function nfeEnviarWorker(cfg, lista, total, cpfCnpj, num, serie) {
   .then(function(resp) {
     if (resp.ok && resp.data) {
       cfg.numero = String(num + 1);
-      localStorage.setItem(NFE_CFG_KEY, JSON.stringify(cfg));
+      nfeCfgSave(cfg);
       var chave = (resp.data.chave_nfe || resp.data.chave || nfeGerarChave(cfg, serie, num, total));
       if (feedbackDiv) { feedbackDiv.textContent = '✅ Nota autorizada!'; feedbackDiv.style.color = 'var(--g)'; }
       nfeFecharModal();
@@ -9580,7 +9632,7 @@ function nfeEnviarWorker(cfg, lista, total, cpfCnpj, num, serie) {
       setTimeout(function(){
         if(confirm('Falha ao emitir nota:\n'+msgErr+'\n\nImprimir cupom em modo simulado?')) {
           cfg.numero = String(num + 1);
-          localStorage.setItem(NFE_CFG_KEY, JSON.stringify(cfg));
+          nfeCfgSave(cfg);
           nfeFecharModal();
           nfeExibirCupom(cfg, nfeGerarChave(cfg, serie, num, total), cpfCnpj, serie, num, total, lista, '(SIMULADO)');
         }
@@ -9592,7 +9644,7 @@ function nfeEnviarWorker(cfg, lista, total, cpfCnpj, num, serie) {
     setTimeout(function(){
       if(confirm('Sem conexão com o Worker.\n'+err.message+'\n\nImprimir cupom em modo simulado?')) {
         cfg.numero = String(num + 1);
-        localStorage.setItem(NFE_CFG_KEY, JSON.stringify(cfg));
+        nfeCfgSave(cfg);
         nfeFecharModal();
         nfeExibirCupom(cfg, nfeGerarChave(cfg, serie, num, total), cpfCnpj, serie, num, total, lista, '(SIMULADO)');
       }
@@ -9673,7 +9725,7 @@ window.nfeCfgSalvar = function() {
   if (tokenEl && tokenEl.value) cfg.apiToken = tokenEl.value;
   var senhaEl    = g('nfe-cfg-certsenha');
   if (senhaEl && senhaEl.value) cfg.certSenha = senhaEl.value;
-  localStorage.setItem(NFE_CFG_KEY, JSON.stringify(cfg));
+  nfeCfgSave(cfg);
   // Indicador de status API
   var apiSt = g('nfe-cfg-api-status');
   if (apiSt) {
@@ -9709,7 +9761,7 @@ window.nfeCertCarregar = function(input) {
       cfg.certNome = file.name;
       cfg.certB64  = b64;
       cfg.certSize = file.size;
-      localStorage.setItem(NFE_CFG_KEY, JSON.stringify(cfg));
+      nfeCfgSave(cfg);
       if (nomeEl) nomeEl.textContent = '📄 ' + file.name + ' (' + (file.size/1024).toFixed(1) + ' KB)';
       if (status) { status.textContent = '✅ Certificado carregado e salvo. Clique em "Salvar Dados NF-e" para confirmar.'; status.style.color = 'var(--g)'; }
     } catch(err) {
@@ -9786,6 +9838,7 @@ window.nfeCfgTestar = function() {
 function cfgProximaSenha() {
   var n = parseInt(localStorage.getItem(SENHA_KEY) || '1');
   localStorage.setItem(SENHA_KEY, String(n + 1));
+  if (window._fbSyncExtra) window._fbSyncExtra('slj_senha_num', String(n + 1));
   return n;
 }
 
@@ -10091,6 +10144,7 @@ window.catRemover = function(i) {
     var excluidas = JSON.parse(localStorage.getItem('slj_cats_excluidas') || '[]');
     if (excluidas.indexOf(catRemovida) === -1) excluidas.push(catRemovida);
     localStorage.setItem('slj_cats_excluidas', JSON.stringify(excluidas));
+    if (window._fbSyncExtra) window._fbSyncExtra('slj_cats_excluidas', excluidas);
   } catch(e) {}
   catRenderLista();
 };
@@ -10127,10 +10181,12 @@ window.catSalvar = function() {
   PDV_CATS = _catTemp.slice();
   try {
     localStorage.setItem(CATS_KEY, JSON.stringify(PDV_CATS));
+    if (window._fbSyncExtra) window._fbSyncExtra('slj_cats', PDV_CATS);
     // Limpar da lista negra categorias que foram re-adicionadas manualmente
     var excluidas = JSON.parse(localStorage.getItem('slj_cats_excluidas') || '[]');
     excluidas = excluidas.filter(function(c) { return PDV_CATS.indexOf(c) === -1; });
     localStorage.setItem('slj_cats_excluidas', JSON.stringify(excluidas));
+    if (window._fbSyncExtra) window._fbSyncExtra('slj_cats_excluidas', excluidas);
   } catch(e) {}
   catFechar();
   pdvRenderCats();
@@ -10424,7 +10480,7 @@ document.addEventListener('keydown', function(e) {
     try { return JSON.parse(localStorage.getItem(CAIXA_KEY) || 'null'); } catch(e) { return null; }
   }
   function caixaSave(obj) {
-    try { localStorage.setItem(CAIXA_KEY, JSON.stringify(obj)); } catch(e) {}
+    try { localStorage.setItem(CAIXA_KEY, JSON.stringify(obj)); if (window._fbSyncExtra) window._fbSyncExtra('slj_caixa_status', obj); } catch(e) {}
   }
   function fmt(n) { return 'R$ '+parseFloat(n||0).toFixed(2).replace('.',','); }
   function fmtData(ts) {
@@ -12232,7 +12288,7 @@ window.crUsarOpcao = function(dia, k, opcao) {
 
 // ----- CONTAS A PAGAR: saídas do banco x lançamentos -----
 function _cpCatForn() { try { return JSON.parse(localStorage.getItem(CP_CAT_FORN_KEY) || '{}'); } catch (e) { return {}; } }
-function _cpLembrarCat(forn, cat) { var k = slug(String(forn || '')); if (!k || !cat) return; var m = _cpCatForn(); m[k] = cat; localStorage.setItem(CP_CAT_FORN_KEY, JSON.stringify(m)); }
+function _cpLembrarCat(forn, cat) { var k = slug(String(forn || '')); if (!k || !cat) return; var m = _cpCatForn(); m[k] = cat; localStorage.setItem(CP_CAT_FORN_KEY, JSON.stringify(m)); if (window._fbSyncExtra) window._fbSyncExtra('slj_cp_cat_forn', m); }
 function _cpFornDoMemo(memo) { var s = String(memo || ''); return (s.indexOf(' - ') > 0 ? s.split(' - ')[0] : s).replace(/^\d+(?=[A-Za-z])/, '').trim().slice(0, 60); }
 function _cpDocTotal(d) { return (d.itens || []).reduce(function(s, it) { return s + (parseFloat(it.valor) || 0); }, 0); }
 function _cpDias(a, b) { return Math.abs((new Date(a + 'T12:00:00') - new Date(b + 'T12:00:00')) / 86400000); }
@@ -12432,7 +12488,10 @@ function fornLoad() {
   try { return JSON.parse(localStorage.getItem(FORN_KEY) || '[]'); } catch(e) { return []; }
 }
 function fornSave(arr) {
-  try { localStorage.setItem(FORN_KEY, JSON.stringify(arr)); } catch(e) {}
+  try {
+    localStorage.setItem(FORN_KEY, JSON.stringify(arr));
+    if (window._fbSyncExtra) window._fbSyncExtra('slj_fornecedores', arr);
+  } catch(e) {}
 }
 
 // Pré-carga: popula fornecedores padrão do extrato Stone (out/2026) se localStorage estiver vazio
@@ -12442,6 +12501,7 @@ function fornSave(arr) {
     if (!_fAtual.length) {
       var _fPad = [{"id":"1a1e57e8167f02","nome":"BENDITTA Salgados","palavras":"BENDITTA FABRICACAO;BENDITTA","cat":"var|salgados"},{"id":"1a1e57e84fae4f","nome":"F&A Sucos","palavras":"F&A SUCOS;FA SUCOS","cat":"var|polpas"},{"id":"1a1e57e850cd46","nome":"ADM Industria Alimentos","palavras":"ADM INDUSTRIA E COMERCIO DE ALIMENTOS;ADM INDUSTRIA","cat":"var|mercado"},{"id":"1a1e57e84f4e88","nome":"ARRAIAL Frios e Laticínios","palavras":"ARRAIAL - FRIOS;ARRAIAL FRIOS;ARRAIAL","cat":"var|mercado"},{"id":"1a1e57e84e97e8","nome":"GAPEIXOTO Distribuidora","palavras":"GAPEIXOTO DISTRIBUIDORA","cat":"var|mercado"},{"id":"1a1e57e829fa1a","nome":"SECO ANTONIO & SANTOS","palavras":"SECO ANTONIO & SANTOS;SECO ANTONIO","cat":"var|mercado"},{"id":"1a1e57e83ac5cd","nome":"OGGI Comercio Alimentos","palavras":"OGGI COMERCIO DE ALIMENTOS","cat":"var|mercado"},{"id":"1a1e57e82b7698","nome":"JS BORIN Alimentos","palavras":"JS BORIN LTDA","cat":"var|mercado"},{"id":"1a1e57e8164311","nome":"LOJAO HORTIFRUT","palavras":"LOJAO HORTIFRUT","cat":"var|mercado"},{"id":"1a1e57e8461b21","nome":"ATACADÃO","palavras":"ATACADAO 948","cat":"var|mercado"},{"id":"1a1e57e826c7a4","nome":"ASSAÍ Atacadista","palavras":"ASSAI ATACADISTA","cat":"var|mercado"},{"id":"1a1e57e81feb7e","nome":"SENDAS / Extra","palavras":"SENDAS DISTRIBUIDORA","cat":"var|mercado"},{"id":"1a1e57e8528024","nome":"Supermercado Itália SBO","palavras":"SUPERMERCADO ITALIA SBO","cat":"var|mercado"},{"id":"1a1e57e826ca31","nome":"Supermercado SAO","palavras":"SUPERMERCADO SAO","cat":"var|mercado"},{"id":"1a1e57e81e22bb","nome":"Mercado Tunussi","palavras":"MERCADO TUNUSSI","cat":"var|mercado"},{"id":"1a1e57e845afc8","nome":"Oliveira Supermercados","palavras":"OLIVEIRA SUPERMERCADOS","cat":"var|mercado"},{"id":"1a1e57e81bf218","nome":"Supermercado Almeida","palavras":"SUPERMERCADO ALMEIDA","cat":"var|mercado"},{"id":"1a1e57e81f06b6","nome":"Delta Supermercados","palavras":"DELTA SUPERMERCADOS","cat":"var|mercado"},{"id":"1a1e57e8398819","nome":"MP Espaço Hortifruti","palavras":"ESPACOHORTIFRUTT;MP*ESPACOHORTIFRUTT","cat":"var|mercado"},{"id":"1a1e57e850d287","nome":"Quitanda da Sete","palavras":"QUITANDA DA SETE MERCEARIA","cat":"var|mercado"},{"id":"1a1e57e8418b5d","nome":"TRIHEX Utensílios","palavras":"TRIHEX COMERCIO DE UTENSILIOS;TRIHEX","cat":"var|utensilios"},{"id":"1a1e57e82ca355","nome":"CAROLINO & GOIS Utilidades","palavras":"CAROLINO & GOIS COMERCIO DE UTILIDADES;CAROLINO","cat":"var|utensilios"},{"id":"1a1e57e84c2665","nome":"STORE IMPORTS","palavras":"STORE IMPORTS SELMA","cat":"var|utensilios"},{"id":"1a1e57e84ea223","nome":"FRANCAMP Ferragens","palavras":"FRANCAMP DE SUMARE COMERCIO DE FERRAGENS;FRANCAMP","cat":"var|manutencao"},{"id":"1a1e57e826384e","nome":"COMERCIAL FLOED Peças","palavras":"COMERCIAL FLOED CONSERTO","cat":"var|manutencao"},{"id":"1a1e57e81f507f","nome":"PAPELARIA ARAÚJO","palavras":"PAPELARIA ARAUJO","cat":"var|escritoriopapelaria"},{"id":"1a1e57e8194ad1","nome":"PAPELARIA TAMOIO","palavras":"PAPELARIA TAMOIO","cat":"var|escritoriopapelaria"},{"id":"1a1e57e81fdc6a","nome":"F C LOPES Papelaria","palavras":"F C LOPES PAPELARIA","cat":"var|escritoriopapelaria"},{"id":"1a1e57e8399c25","nome":"SUNIMOVEIS Imobiliária","palavras":"SUNIMOVEIS IMOBILIARIA","cat":"fix|aluguel"},{"id":"1a1e57e8353c06","nome":"CPFL Energia","palavras":"CPFLEnergia;CPFL","cat":"fix|energia"},{"id":"1a1e57e820b62e","nome":"BRK Ambiental Sumaré","palavras":"BRK AMBIENTAL - SUMARE;BRK AMBIENTAL","cat":"fix|aguadae"},{"id":"1a1e57e81d6195","nome":"DESKTOP Internet","palavras":"DESKTOP S.A.","cat":"fix|internet"},{"id":"1a1e57e83b3c4c","nome":"SKYHAND Informática","palavras":"SKYHAND SERVICOS DE INFORMATICA","cat":"fix|sistemaerp"},{"id":"1a1e57e820d3a9","nome":"JOSE RIVALDAVIO","palavras":"JOSE RIVALDAVIO RODRIGUES SANTOS","cat":"fix|salariovalefreela"},{"id":"1a1e57e84cd971","nome":"MANOEL TAVOLONI","palavras":"MANOEL TAVOLONI","cat":"fix|salariovalefreela"},{"id":"1a1e57e835d244","nome":"GRAZIELA LESSA","palavras":"GRAZIELA AGUIAR DA SILVA LESSA","cat":"var|salgados"},{"id":"1a1e57e81b6292","nome":"JONE COUTINHO","palavras":"JONE COUTINHO","cat":"fix|salariovalefreela"},{"id":"1a1e57e833731e","nome":"ANTONIO ZANI NETO","palavras":"ANTONIO S ZANI NETO","cat":"fix|salariovalefreela"},{"id":"1a1e57e81a0cde","nome":"Geovana Oliveira Costa","palavras":"Geovana Oliveira Costa;GEOVANA OLIVEIRA","cat":"fix|salariovalefreela"},{"id":"1a1e57e838352d","nome":"RONIS ANTONIO SILVA","palavras":"RONIS ANTONIO SILVA","cat":"fix|salariovalefreela"},{"id":"1a1e57e8412dbc","nome":"MARIA VITORIA SOUZA","palavras":"MARIA VITORIA SOUZA","cat":"fix|salariovalefreela"},{"id":"1a1e57e84269c8","nome":"Washington Luiz Cabette","palavras":"Washington Luiz da Silva Cabette;WASHINGTON LUIZ","cat":"fix|salariovalefreela"},{"id":"1a1e57e827da9a","nome":"MARCIA MARIA DA SILVA","palavras":"MARCIA MARIA DA SILVA;MarciaMariaDaSilv","cat":"fix|salariovalefreela"},{"id":"1a1e57e831cdc3","nome":"THAIS ALVES RIBEIRO","palavras":"THAIS ALVES RIBEIRO;41.887.576 THAIS","cat":"fix|salariovalefreela"},{"id":"1a1e57e8345045","nome":"Sandra Franco","palavras":"Sandra de Lourdes Celes Franco;SANDRA DE LOURDES","cat":"fix|salariovalefreela"},{"id":"1a1e57e84fb31f","nome":"DEISE CRISTINA DOS SANTOS","palavras":"DEISE CRISTINA DOS SANTOS","cat":"fix|salariovalefreela"},{"id":"1a1e57e81e17d4","nome":"LARISSA CECONELLO","palavras":"LARISSA DOS SANTOS CECONELLO","cat":"fix|salariovalefreela"},{"id":"1a1e57e8507b23","nome":"JOAO GUILHERME NIELSEN","palavras":"JOAO GUILHERME NIELSEN","cat":"fix|salariovalefreela"},{"id":"1a1e57e826890c","nome":"ANDRE LUIZ PEREIRA","palavras":"47918240 ANDRE LUIZ PEREIRA;ANDRE LUIZ PEREIRA","cat":"fix|salariovalefreela"},{"id":"1a1e57e83206de","nome":"MANUELLA TEIXEIRA DA CRUZ","palavras":"MANUELLA CAMILLY TEIXEIRA DA CRUZ","cat":"fix|salariovalefreela"},{"id":"1a1e57e84e876d","nome":"THAMIRA BELLUCO","palavras":"THAMIRA BELLUCO CRAICI","cat":"fix|salariovalefreela"},{"id":"1a1e57e84aed0a","nome":"JOAO TOMAZ DOS SANTOS","palavras":"JOAO TOMAZ DOS SANTOS NETO","cat":"fix|salariovalefreela"},{"id":"1a1e57e84f6039","nome":"Thais Augusta Neris","palavras":"Thais Augusta de Souza Neris","cat":"fix|salariovalefreela"},{"id":"1a1e57e81e4bcc","nome":"MARIA JULIA BOSCARO","palavras":"MARIA JULIA FURTADO BOSCARO","cat":"fix|salariovalefreela"},{"id":"1a1e57e84bfa25","nome":"OCTAVIO AUGUSTO DANIEL","palavras":"OCTAVIO AUGUSTO DANIEL","cat":"fix|salariovalefreela"},{"id":"1a1e57e8326ddb","nome":"ANDREA DOS SANTOS BRAGAGLIA","palavras":"36 778 432 ANDREA DOS SANTOS BRAGAGLIA;ANDREA DOS SANTOS BRAGAGLIA","cat":"fix|salariovalefreela"},{"id":"1a1e57e84307b0","nome":"CLAUDIO ROBERTO BASSO","palavras":"CLAUDIO ROBERTO BASSO ESTACIONAMENTO","cat":"fix|salariovalefreela"},{"id":"1a1e57e8471eb8","nome":"ADAUTO CANDIDO DA COSTA","palavras":"ADAUTO CANDIDO DA COSTA","cat":"fix|salariovalefreela"},{"id":"1a1e57e82c0ce9","nome":"ALEXANDRE DA SILVA DOS SANTOS","palavras":"ALEXANDRE DA SILVA DOS SANTOS","cat":"fix|salariovalefreela"},{"id":"1a1e57e8380fcb","nome":"ALESSANDRA ZINGRA ZAGUE","palavras":"ALESSANDRA ZINGRA SICONHA ZAGUE;ALESSANDRA ZINGRA","cat":"fix|salariovalefreela"},{"id":"1a1e57e81b6b6a","nome":"MARIANA PIRES DA SILVA","palavras":"MARIANA PIRES DA SILVA","cat":"fix|salariovalefreela"},{"id":"1a1e57e827f9df","nome":"THAIS NERIS","palavras":"Thais Augusta de Souza Neris;THAIS NERIS","cat":"fix|salariovalefreela"},{"id":"1a1e57e81e52a5","nome":"FFS UNHAS EXPRESS","palavras":"FFS UNHAS EXPRESS LTDA","cat":"fix|salariovalefreela"},{"id":"1a1e57e830c153","nome":"CAIXA ECONOMICA - FGTS","palavras":"CAIXA ECONOMICA FEDERAL","cat":"fix|fgtsfunc"},{"id":"1a1e57e8321982","nome":"MINISTERIO DA FAZENDA","palavras":"MINISTERIO DA FAZENDA","cat":"fix|inssfunc"},{"id":"1a1e57e839a89d","nome":"Americana Medicina Trabalho","palavras":"AMERICANA ASSESSORIA EM MEDICINA DO TRABALHO","cat":"fix|contabilidade"},{"id":"1a1e57e82836c7","nome":"99 FOOD (taxa desconto)","palavras":"99 FOOD LTDA;99 TECNOLOGIA LTDA","cat":"var|taxa_99food"},{"id":"1a1e57e848b6a2","nome":"iFood (taxa desconto)","palavras":"IFOOD.COM AGENCIA DE RESTAURANTES","cat":"var|taxa_ifood"},{"id":"1a1e57e82399cc","nome":"PIX Marketplace (taxa)","palavras":"PIX Marketplace","cat":"var|taxamaquininha"},{"id":"1a1e57e8546f1f","nome":"Pagar.me","palavras":"Pagar Me Instituicao De Pagamento","cat":"var|taxamaquininha"},{"id":"1a1e57e8571db6","nome":"MAREE Instituição Pgto","palavras":"MAREE INSTITUICAO DE PAGAMENTO","cat":"var|taxamaquininha"},{"id":"1a1e57e84fdadb","nome":"MODA MUNDIAL PAGAMENTOS","palavras":"MODA MUNDIAL BRASIL PAGAMENTOS","cat":"var|taxamaquininha"},{"id":"1a1e57e8492dc5","nome":"Stone Cancelamento","palavras":"Cancelamento de venda - Stone","cat":"var|taxamaquininha"},{"id":"1a1e57e82b04f6","nome":"ARMAZEM Chinelaria","palavras":"ARMAZEM CHINELARIA","cat":"fix|pgtoloja"},{"id":"1a1e57e840a38e","nome":"GOOD BOM LOJA","palavras":"GOOD BOMLOJA","cat":"fix|pgtoloja"},{"id":"1a1e57e848a92c","nome":"CASA DO MORANGO","palavras":"CASA DO MORANGO","cat":"fix|pgtoloja"},{"id":"1a1e57e8248261","nome":"Dona Cecília Restaurante","palavras":"DONA CECILIA RESTAURAN","cat":"fix|pgtoloja"},{"id":"1a1e57e846d248","nome":"PASTEL POKO LOKO","palavras":"PASTEL POKO LOKO","cat":"fix|pgtoloja"},{"id":"1a1e57e8418dfb","nome":"RIBEIROS Cafeteria","palavras":"RIBEIROS CAFETERIA","cat":"fix|pgtoloja"},{"id":"1a1e57e82fe07b","nome":"Arcos Dourados / McDonald's","palavras":"ARCOS DOURADOS COMERCIO DE ALIMENTOS","cat":"fix|pgtoloja"},{"id":"1a1e57e850264d","nome":"MP Maquiagem","palavras":"MP*MAQUIAGEMECIA;MAQUIAGEMECIA","cat":"fix|pgtoloja"},{"id":"1a1e57e82ebe6e","nome":"BEAUTY HUB Varejo","palavras":"BEAUTY HUB VAREJO","cat":"fix|pgtoloja"},{"id":"1a1e57e846fdfc","nome":"MARDEGAN Cosméticos","palavras":"MARDEGAN - COMERCIO DE COSMETICOS;MARDEGAN","cat":"fix|pgtoloja"},{"id":"1a1e57e849e7f5","nome":"DROGARIA SÃO PAULO","palavras":"DROGARIA SAO PAULO S.A.","cat":"fix|pgtoloja"},{"id":"1a1e57e830672c","nome":"RAIA DROGASIL","palavras":"RAIA DROGASIL S/A","cat":"fix|pgtoloja"},{"id":"1a1e57e83c88f3","nome":"DROGAL Santa Barb","palavras":"DROGAL SANTA BARB","cat":"fix|pgtoloja"},{"id":"1a1e57e84d64a0","nome":"BUCK RADIOLOGIA","palavras":"BUCK RADIOLOGIA LTDA","cat":"fix|pgtoloja"},{"id":"1a1e57e8330990","nome":"AMERICANAS","palavras":"AMERICANAS S A EM RECUPERACAO JUDICIAL;LOJAS AMERICANAS","cat":"fix|pgtoloja"},{"id":"1a1e57e8227016","nome":"POSTHAUS","palavras":"POSTHAUS LTDA","cat":"fix|pgtoloja"},{"id":"1a1e57e84a2052","nome":"ALWAYS FIT Suplementos","palavras":"ALWAYS FIT SUPLEMENTOS","cat":"fix|pgtoloja"},{"id":"1a1e57e83240d7","nome":"ON Mobilidade Urbana (99app)","palavras":"ON TECNOLOGIA DE MOBILIDADE URBANA","cat":"fix|pgtoloja"},{"id":"1a1e57e84a7d0a","nome":"COMERCIO RAÇÕES OLIVEIRA","palavras":"COMERCIO DE RACOES E ACESSORIOS OLIVEIRA","cat":"fix|pgtoloja"},{"id":"1a1e57e84e356f","nome":"SINDICATO Trabalhadores","palavras":"SINDICATO DOS TRABALHADORES EM RESTAURANTES","cat":"fix|pgtoloja"}];
       localStorage.setItem(FORN_KEY, JSON.stringify(_fPad));
+      if (window._fbSyncExtra) window._fbSyncExtra('slj_fornecedores', _fPad);
       console.log('[SLJ] ' + _fPad.length + ' fornecedores padrão carregados');
     }
   } catch(e) {}
@@ -12934,7 +12994,7 @@ window.crCorrigirTudo = function() {
 window._crSalvPref = function(k, val) {
   var p = window._crPendDifs; if (!p) return;
   p.pref[k] = val;
-  try { localStorage.setItem(p.prefKey, JSON.stringify(p.pref)); } catch(e) {}
+  try { localStorage.setItem(p.prefKey, JSON.stringify(p.pref)); if (window._fbSyncExtra) window._fbSyncExtra(p.prefKey, p.pref); } catch(e) {}
 };
 
 window.crCorrigirTudoSistema = function() {
