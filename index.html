@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.229</title>
+<title>Suco Laranjinha -- PDV v1.6.230</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -2288,7 +2288,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.229';
+var APP_VERSION = 'v1.6.230';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -11312,6 +11312,8 @@ function cpRender() {
         + '<td style="padding:7px 8px;font-weight:700">' + (i === 0 ? _cpEsc(d.fornecedor || '—') : '') + '</td>'
         + '<td style="padding:7px 8px">' + _cpEsc(it.desc) + '</td>'
         + '<td style="padding:7px 8px;color:var(--o);font-weight:700">' + _cpEsc(_cpCatNome(it.cat)) + '</td>'
+        + '<td style="padding:7px 8px;text-align:right;white-space:nowrap;color:var(--mu)">' + (it.qtde && it.qtde > 0 && it.qtde !== 1 ? it.qtde : (it.qtde === 1 ? '1' : '—')) + (it.unidade ? ' <small>' + _cpEsc(it.unidade) + '</small>' : '') + '</td>'
+        + '<td style="padding:7px 8px;text-align:right;white-space:nowrap;color:var(--mu)">' + (it.valor_unit && it.valor_unit > 0 ? _cpMoney(it.valor_unit) : '—') + '</td>'
         + '<td style="padding:7px 8px;text-align:right;font-weight:800;white-space:nowrap">' + _cpMoney(parseFloat(it.valor) || 0) + '</td>'
         + '<td style="padding:7px 8px;text-align:right;white-space:nowrap">' + (i === 0
           ? (d.foto ? '<button onclick="cpVerFoto(' + d.id + ')" title="Ver documento" style="border:none;background:transparent;cursor:pointer;font-size:1rem">📷</button>' : '')
@@ -11323,7 +11325,7 @@ function cpRender() {
   var w = document.getElementById('cp-lista');
   w.innerHTML = linhas
     ? '<table style="width:100%;border-collapse:collapse;font-size:0.8rem"><thead><tr style="text-align:left;color:var(--mu);font-size:0.68rem;text-transform:uppercase">'
-      + '<th style="padding:6px 8px">Data</th><th style="padding:6px 8px">Fornecedor</th><th style="padding:6px 8px">Item</th><th style="padding:6px 8px">Linha do DRE</th><th style="padding:6px 8px;text-align:right">Valor</th><th></th></tr></thead><tbody>' + linhas + '</tbody></table>'
+      + '<th style="padding:6px 8px">Data</th><th style="padding:6px 8px">Fornecedor</th><th style="padding:6px 8px">Item</th><th style="padding:6px 8px">Linha do DRE</th><th style="padding:6px 8px;text-align:right">Qtde</th><th style="padding:6px 8px;text-align:right">Vl.Unit</th><th style="padding:6px 8px;text-align:right">Total</th><th></th></tr></thead><tbody>' + linhas + '</tbody></table>'
     : '<div style="color:var(--mu);font-size:0.85rem;padding:14px 4px">Nenhum lançamento neste mês.</div>';
   document.getElementById('cp-total').textContent = _cpMoney(total);
   var temChave = !!localStorage.getItem(CP_IA_KEY);
@@ -11349,11 +11351,10 @@ function _cpEditorLinhas() {
   var cats = _cpCats();
   var h = '';
   _cpEdit.itens.forEach(function(it, i) {
-    // Se qtde não foi salva, calcula na hora (qtde=1, unit=valor)
-    if (!it.qtde || it.qtde <= 0) it.qtde = 1;
-    if (!it.valor_unit || it.valor_unit <= 0) it.valor_unit = it.valor > 0 ? _r2(it.valor / it.qtde) : 0;
-    var qtde = it.qtde;
-    var vlrUnit = it.valor_unit || 0;
+    // qtde: se não foi salvo, mostra vazio (usuário preenche)
+    // valor_unit: se qtde válida, calcula; senão fica vazio também
+    var qtde = (it.qtde && it.qtde > 0) ? it.qtde : '';
+    var vlrUnit = (it.valor_unit && it.valor_unit > 0) ? it.valor_unit : (qtde > 0 ? _r2((parseFloat(it.valor)||0) / qtde) : 0);
     var temDesc = it.desconto_item > 0;
     // Tooltip de desconto aplicado
     var descTip = temDesc ? ' title="Desconto rateado: -R$ ' + it.desconto_item.toFixed(2).replace('.',',') + ' | Bruto: R$ ' + (it.valor_unit_bruto||vlrUnit).toFixed(2).replace('.',',') + '"' : '';
@@ -11364,7 +11365,7 @@ function _cpEditorLinhas() {
       + '<select onchange="_cpEdit.itens[' + i + '].cat=this.value" style="flex:1 1 110px;min-width:0;padding:6px 5px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.74rem">'
       + cats.map(function(c) { return '<option value="' + c.v + '"' + (c.v === it.cat ? ' selected' : '') + '>' + _cpEsc(c.n) + '</option>'; }).join('') + '</select>'
       // Qtde
-      + '<input type="number" min="0" step="0.001" value="' + qtde + '" oninput="_cpEdit.itens[' + i + '].qtde=parseFloat(this.value)||1;_cpEditorAtualizarUnit(' + i + ')" placeholder="Qtde" inputmode="decimal" style="flex:0 0 60px;width:60px;padding:6px 6px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.78rem;text-align:right">'
+      + '<input type="number" min="0" step="0.001" value="' + qtde + '" oninput="_cpEdit.itens[' + i + '].qtde=parseFloat(this.value)||0;_cpEditorAtualizarUnit(' + i + ')" placeholder="Qtde" inputmode="decimal" style="flex:0 0 60px;width:60px;padding:6px 6px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.78rem;text-align:right">'
       // Unidade de medida
       + '<input value="' + _cpEsc(it.unidade||'') + '" oninput="_cpEdit.itens[' + i + '].unidade=this.value" placeholder="un" title="Unidade de medida (kg, L, un, cx...)" style="flex:0 0 42px;width:42px;padding:6px 4px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--mu);font-size:0.72rem;text-align:center">'
       // Vlr Unit (editável - usuário pode digitar unit e total recalcula)
