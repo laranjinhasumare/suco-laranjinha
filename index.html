@@ -719,6 +719,9 @@ body.light-mode .hname{background:#F8FAFC !important}
     <button class="nb" onclick="showPgFinanceiro('cmv',this)"><span class="ni">📦</span>CMV</button>
     <button class="nb" onclick="showPgFinanceiro('estoque',this)"><span class="ni">📋</span>Estoque</button>
     <button class="nb" onclick="showPgFinanceiro('config-pdv',this)"><span class="ni">⚙️</span>Configurações</button>
+    <div style="height:1px;background:var(--bd);margin:8px 0"></div>
+    <div style="font-size:9px;color:#A855F7;padding:2px 10px 4px;font-family:monospace;text-transform:uppercase;letter-spacing:1px">🤖 Inteligência</div>
+    <button class="nb" onclick="showPgFinanceiro('ia-gerente',this)" style="background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(168,85,247,0.08));border-left:3px solid #A855F7 !important"><span class="ni">🤖</span>IA Gerente</button>
   </nav>
   <div class="sb-ft">
   Desenvolvido por <b>Junior Sartori</b><br>
@@ -5141,6 +5144,43 @@ onValue(ref(db, 'slj/contas_pagar'), function(snap) {
     } catch(e) {}
 });
 
+
+// ── Listener em tempo real: Extras (config, gemini_key, etc.) ───────────────
+onValue(ref(db, 'slj/extras'), function(snap) {
+    if (!snap.exists()) return;
+    try {
+        var remote = snap.val();
+        if (!remote || typeof remote !== 'object') return;
+        // Restaurar cada chave no localStorage (sem sobrescrever dados locais mais novos)
+        var keysToRestore = ['slj_config','slj_cats','slj_cats_excluidas','slj_receitas','slj_insumos',
+            'slj_estq_real','slj_nfe_cfg','slj_theme','slj_senha_num','slj_senha_ultima',
+            'slj_caixa_status','slj_turnos_historico','slj_unidades','slj_fornecedores',
+            'slj_cp_cat_forn','slj_senha_financeiro','slj_gemini_key','slj_gemini_modelo'];
+        keysToRestore.forEach(function(k) {
+            if (remote[k] !== undefined && remote[k] !== null) {
+                // Só restaura se não tiver valor local já definido
+                // (prioridade: local > Firebase, exceto gemini_key que sempre sincroniza)
+                var localVal = localStorage.getItem(k);
+                var alwaysSync = (k === 'slj_gemini_key' || k === 'slj_gemini_modelo');
+                if (!localVal || alwaysSync) {
+                    var v = remote[k];
+                    localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
+                }
+            }
+        });
+        // Atualizar display da chave IA se ela foi restaurada
+        var chaveRestaurada = localStorage.getItem('slj_gemini_key');
+        if (chaveRestaurada) {
+            var d = document.getElementById('cfg-ia-chave-display');
+            if (d && !d._chave) {
+                d._chave = chaveRestaurada;
+                d._oculta = true;
+                d.textContent = '•••••••••••• (clique para mostrar)';
+            }
+        }
+    } catch(e) {}
+});
+
 // Interceptar cpSave para marcar que o próximo disparo do listener é local
 var _cpSaveOrigFb = window._fbSetContasPagar;
 window._fbSetContasPagar = function(data) {
@@ -5231,7 +5271,7 @@ get(ref(db, 'slj')).then(function(snap) {
             // Carregar extras (config, cats, receitas, etc)
             if (fbData.extras) {
                 try {
-                    var extraKeys = ['slj_config','slj_cats','slj_cats_excluidas','slj_receitas','slj_insumos','slj_estq_real','slj_nfe_cfg','slj_theme','slj_senha_num','slj_senha_ultima','slj_caixa_status','slj_turnos_historico','slj_unidades','slj_fornecedores','slj_cp_cat_forn','slj_senha_financeiro'];
+                    var extraKeys = ['slj_config','slj_cats','slj_cats_excluidas','slj_receitas','slj_insumos','slj_estq_real','slj_nfe_cfg','slj_theme','slj_senha_num','slj_senha_ultima','slj_caixa_status','slj_turnos_historico','slj_unidades','slj_fornecedores','slj_cp_cat_forn','slj_senha_financeiro','slj_gemini_key','slj_gemini_modelo'];
                     extraKeys.forEach(function(ek) {
                         if (fbData.extras[ek] !== undefined) {
                             var v = fbData.extras[ek];
@@ -8887,9 +8927,14 @@ window.cfgIaSalvar = function() {
   var v = (document.getElementById('cfg-ia-nova-chave').value || '').trim();
   if (!v) { SLJ_TOAST('Cole a chave antes de salvar', 'r'); return; }
   localStorage.setItem(CP_IA_KEY, v);
+  // Sincronizar com Firebase para não perder ao trocar de dispositivo
+  if (window._fbSyncExtra) {
+    window._fbSyncExtra('slj_gemini_key', v);
+    window._fbSyncExtra('slj_gemini_modelo', localStorage.getItem('slj_gemini_modelo') || '');
+  }
   document.getElementById('cfg-ia-nova-chave').value = '';
   var msg = document.getElementById('cfg-ia-msg');
-  if (msg) { msg.textContent = '✅ Chave salva neste computador'; setTimeout(function(){ msg.textContent=''; }, 3000); }
+  if (msg) { msg.textContent = '✅ Chave salva (nuvem + local)'; setTimeout(function(){ msg.textContent=''; }, 3000); }
   // Atualizar display
   var d = document.getElementById('cfg-ia-chave-display');
   if (d) { d._chave = v; d._oculta = true; d.textContent = '•••••••••••• (clique para mostrar)'; }
@@ -10227,6 +10272,62 @@ window.catSalvar = function() {
 
 })();
 </script>
+
+
+<!-- ===================== IA GERENTE ===================== -->
+<div id="pg-ia-gerente" class="pg" style="padding-bottom:40px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+    <span style="font-size:1.2rem;font-weight:900;background:linear-gradient(135deg,#A855F7,#7C3AED);-webkit-background-clip:text;-webkit-text-fill-color:transparent">🤖 IA Gerente</span>
+    <span style="font-size:10px;padding:3px 10px;border-radius:20px;background:rgba(168,85,247,0.15);color:#A855F7;font-family:monospace;font-weight:700;border:1px solid rgba(168,85,247,0.3)">BETA</span>
+    <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
+      <button onclick="iaGerente_analisar()" id="btn-ia-analisar" style="padding:8px 18px;border-radius:10px;border:none;background:linear-gradient(135deg,#7C3AED,#A855F7);color:#fff;font-weight:800;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;gap:6px">
+        <span>🔍</span><span>Analisar Sistema</span>
+      </button>
+      <button onclick="iaGerente_analisarComIA()" id="btn-ia-gemini" style="padding:8px 18px;border-radius:10px;border:1.5px solid #A855F7;background:transparent;color:#A855F7;font-weight:800;font-size:0.82rem;cursor:pointer">🤖 Análise com IA</button>
+    </div>
+  </div>
+
+  <!-- Status bar -->
+  <div id="ia-ger-status" style="display:none;padding:10px 14px;border-radius:10px;background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:#A855F7;font-size:0.82rem;margin-bottom:12px;font-family:monospace">
+    ⏳ Analisando...
+  </div>
+
+  <!-- Resumo rápido - cards de contador -->
+  <div id="ia-ger-summary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px"></div>
+
+  <!-- Alertas críticos -->
+  <div id="ia-ger-criticos" style="margin-bottom:12px"></div>
+
+  <!-- Avisos -->
+  <div id="ia-ger-avisos" style="margin-bottom:12px"></div>
+
+  <!-- Sugestões -->
+  <div id="ia-ger-sugestoes" style="margin-bottom:12px"></div>
+
+  <!-- Análise IA Gemini -->
+  <div id="ia-ger-gemini" style="display:none;margin-bottom:12px">
+    <div style="background:var(--card);border:1px solid rgba(168,85,247,0.4);border-radius:14px;padding:16px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--bd)">
+        <span style="font-size:1rem">🤖</span>
+        <span style="font-size:0.82rem;font-weight:800;color:#A855F7;text-transform:uppercase;letter-spacing:0.8px">Diagnóstico IA — Gemini</span>
+      </div>
+      <div id="ia-ger-gemini-txt" style="font-size:0.84rem;line-height:1.6;color:var(--tx)"></div>
+    </div>
+  </div>
+
+  <!-- Modal autorização -->
+  <div id="ia-ger-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--card);border:1px solid #A855F7;border-radius:16px;padding:24px;max-width:460px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+      <div style="font-size:1rem;font-weight:900;margin-bottom:8px;color:#A855F7">✍️ Autorização Necessária</div>
+      <div id="ia-ger-modal-desc" style="font-size:0.84rem;color:var(--tx);line-height:1.5;margin-bottom:16px;padding:12px;background:var(--c2);border-radius:10px;border:1px solid var(--bd)"></div>
+      <div style="font-size:0.75rem;color:var(--mu);margin-bottom:16px">⚠️ A IA <b>nunca</b> altera dados sem sua confirmação por escrito nesta tela.</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="iaGerente_autorizar()" style="flex:1;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,#7C3AED,#A855F7);color:#fff;font-weight:800;font-size:0.85rem;cursor:pointer">✅ Autorizar</button>
+        <button onclick="iaGerente_cancelar()" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid var(--bd);background:transparent;color:var(--tx);font-weight:700;font-size:0.85rem;cursor:pointer">❌ Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 <!-- ===== CUPOM PARA IMPRESSÃO ===== -->
@@ -13061,4 +13162,367 @@ window._crConfirmarTudo = function() {
   if (pares.length) {
     _crAplicar(p.y, p.mi, pares);
     crRender();
-    SLJ_TOAST('✅ DRE corrigido (' + pares.length + 
+    SLJ_TOAST('✅ DRE corrigido (' + pares.length + ' valores pela conciliação bancária', 'g');
+  }
+};
+</script>
+
+<!-- ===================== IA GERENTE — JAVASCRIPT ===================== -->
+<script>
+(function() {
+
+var _iaGerPendingAction = null;
+
+// ============================================================
+// NÚCLEO: coleta de dados do sistema
+// ============================================================
+function iaGer_coletarDados() {
+  var now = new Date();
+  var year = now.getFullYear();
+  var mesAtual = now.getMonth();
+
+  var mesesDRE = [];
+  for (var mi = 0; mi < 12; mi++) {
+    var col = (typeof calc_month === 'function') ? calc_month(year, mi) : null;
+    if (col && (col.fat > 0 || col.gst > 0)) {
+      mesesDRE.push({ mi: mi, nome: ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][mi], col: col });
+    }
+  }
+
+  var insumos = (typeof insumoGetAll === 'function') ? insumoGetAll() : [];
+  var estqReal = {};
+  try { estqReal = JSON.parse(localStorage.getItem('slj_estq_real') || '{}'); } catch(e) {}
+  var receitas = (typeof receitaGetAll === 'function') ? receitaGetAll() : {};
+  var catalogo = window.PDV_CATALOGO || [];
+  var contasPagar = [];
+  try { contasPagar = JSON.parse(localStorage.getItem('slj_contas_pagar') || '[]'); } catch(e) {}
+  var hist = (window.PDV && window.PDV.historico) ? window.PDV.historico : [];
+  var now2 = new Date();
+  var hoje = now2.toISOString().slice(0,10);
+  var h30ms = new Date(now2.getTime() - 30*24*60*60*1000).toISOString().slice(0,10);
+  var vendasRecentes = hist.filter(function(v){ return v.ts && v.ts.slice(0,10) >= h30ms; });
+
+  return { year:year, mesAtual:mesAtual, mesesDRE:mesesDRE, insumos:insumos, estqReal:estqReal, receitas:receitas, catalogo:catalogo, contasPagar:contasPagar, hist:hist, vendasRecentes:vendasRecentes, hoje:hoje };
+}
+
+// ============================================================
+// ANÁLISE LOCAL — gera alertas automáticos
+// ============================================================
+function iaGer_gerarAlertas(dados) {
+  var criticos = [], avisos = [], sugestoes = [];
+  var fmt = function(v){ return 'R$'+v.toFixed(2).replace('.',','); };
+
+  // ── DRE ────────────────────────────────────────────────
+  var meses = dados.mesesDRE;
+  if (meses.length === 0) {
+    avisos.push({ tipo:'aviso', icone:'📊', titulo:'DRE sem dados', msg:'Nenhum dado financeiro encontrado para '+dados.year+'. Lance entradas no DRE por Mês.', acao:null });
+  } else {
+    meses.forEach(function(m) {
+      var c = m.col;
+      if (c.fat > 0 && c.mg < 0) {
+        criticos.push({ tipo:'critico', icone:'🔴', titulo:'Margem negativa — '+m.nome+'/'+dados.year, msg:'Faturamento '+fmt(c.fat)+' mas gastos '+fmt(c.gst)+'. Prejuízo de '+fmt(Math.abs(c.lucro))+' ('+c.mg.toFixed(1)+'%).', acao:null });
+      } else if (c.fat > 0 && c.mg < 10) {
+        avisos.push({ tipo:'aviso', icone:'🟡', titulo:'Margem baixa — '+m.nome+'/'+dados.year, msg:'Margem de '+c.mg.toFixed(1)+'% está abaixo do ideal (mínimo recomendado: 15%). Faturamento: '+fmt(c.fat)+'.', acao:null });
+      }
+      if (c.fat === 0 && m.mi < dados.mesAtual) {
+        avisos.push({ tipo:'aviso', icone:'⚠️', titulo:'Faturamento zerado — '+m.nome+'/'+dados.year, msg:'Nenhum faturamento registrado em '+m.nome+'. Verifique se os dados foram lançados corretamente.', acao:null });
+      }
+      if (c.fat > 0 && c.prod && c.prod/c.fat > 0.60) {
+        criticos.push({ tipo:'critico', icone:'💰', titulo:'Custo variável alto — '+m.nome, msg:'Custos variáveis representam '+(c.prod/c.fat*100).toFixed(1)+'% do faturamento ('+fmt(c.prod)+'). Acima de 60% é sinal de alerta.', acao:null });
+      }
+    });
+
+    for (var i = 1; i < meses.length; i++) {
+      var ant = meses[i-1].col.fat, atu = meses[i].col.fat;
+      if (ant > 0 && atu > 0) {
+        var var_pct = (atu - ant) / ant * 100;
+        if (var_pct < -30) {
+          avisos.push({ tipo:'aviso', icone:'📉', titulo:'Queda brusca de faturamento — '+meses[i].nome, msg:'Queda de '+Math.abs(var_pct).toFixed(0)+'% em relação a '+meses[i-1].nome+' ('+fmt(ant)+' → '+fmt(atu)+'). Verifique se foi lançado corretamente.', acao:null });
+        }
+      }
+    }
+  }
+
+  // ── ESTOQUE ────────────────────────────────────────────
+  if (dados.insumos.length === 0) {
+    sugestoes.push({ tipo:'sugestao', icone:'📦', titulo:'Estoque não cadastrado', msg:'Nenhum insumo cadastrado. Vá em Estoque → Valorizado para cadastrar seus produtos.', acao:null });
+  } else {
+    dados.insumos.forEach(function(ins) {
+      var qtdAtual = dados.estqReal[ins.id] || 0;
+      var critico = parseFloat(ins.estqCritico) || 0;
+      if (qtdAtual <= 0) {
+        criticos.push({ tipo:'critico', icone:'🔴', titulo:'Estoque ZERADO: '+ins.nome, msg:'Estoque do item "'+ins.nome+'" está em ZERO. Faça o pedido imediatamente!', acao:null });
+      } else if (critico > 0 && qtdAtual <= critico) {
+        avisos.push({ tipo:'aviso', icone:'🟡', titulo:'Estoque crítico: '+ins.nome, msg:'"'+ins.nome+'" está com '+qtdAtual.toFixed(2)+' '+ins.unidBase+' (crítico: '+critico.toFixed(2)+'). Faça o pedido em breve.', acao:null });
+      }
+    });
+
+    var prodSemRecei = (dados.catalogo || []).filter(function(p){
+      var r = dados.receitas[String(p.cod)];
+      return p.ativo !== false && (!r || !(r.ingredientes||[]).length);
+    });
+    if (prodSemRecei.length > 0) {
+      sugestoes.push({ tipo:'sugestao', icone:'🧾', titulo:'Produtos sem receita cadastrada', msg:prodSemRecei.length+' produto(s) sem receita: '+prodSemRecei.slice(0,3).map(function(p){return p.nome;}).join(', ')+(prodSemRecei.length>3?'...':'')+'. Sem receita o sistema não controla consumo de estoque.', acao:null });
+    }
+  }
+
+  // ── CONTAS A PAGAR ─────────────────────────────────────
+  var contasVencidas = dados.contasPagar.filter(function(c){ return c.status !== 'pago' && c.vencimento && c.vencimento < dados.hoje; });
+  if (contasVencidas.length > 0) {
+    var totalVenc = contasVencidas.reduce(function(s,c){ return s+(parseFloat(c.valor)||0); }, 0);
+    criticos.push({ tipo:'critico', icone:'🧾', titulo:contasVencidas.length+' conta(s) VENCIDA(S)', msg:'Você tem '+contasVencidas.length+' conta(s) vencida(s) totalizando '+fmt(totalVenc)+'. Veja: '+contasVencidas.slice(0,3).map(function(c){ return (c.fornecedor||'?')+'('+c.vencimento+')'; }).join(', ')+(contasVencidas.length>3?'...':''), acao:null });
+  }
+
+  var semCat = dados.contasPagar.filter(function(c){ return !c.categoria && c.status !== 'pago'; });
+  if (semCat.length > 3) {
+    sugestoes.push({ tipo:'sugestao', icone:'🏷️', titulo:'Contas sem categoria DRE', msg:semCat.length+' conta(s) a pagar sem categoria. Categorizar garante que o DRE reflita a realidade.', acao:null });
+  }
+
+  // ── VENDAS RECENTES ────────────────────────────────────
+  if (dados.vendasRecentes.length === 0 && dados.hist.length > 0) {
+    avisos.push({ tipo:'aviso', icone:'📊', titulo:'Sem vendas nos últimos 30 dias', msg:'Nenhuma venda registrada nos últimos 30 dias no PDV. Verifique se o sistema está sendo usado corretamente.', acao:null });
+  }
+
+  // ── SUGESTÃO IA ────────────────────────────────────────
+  var chaveGemini = localStorage.getItem('slj_gemini_key');
+  if (!chaveGemini) {
+    sugestoes.push({ tipo:'sugestao', icone:'🤖', titulo:'Configure a chave IA para análise mais profunda', msg:'Com a chave do Google Gemini (Configurações → Chave IA), a IA faz diagnósticos em linguagem natural e identifica padrões com muito mais detalhe.', acao:null });
+  }
+
+  return { criticos:criticos, avisos:avisos, sugestoes:sugestoes };
+}
+
+// ============================================================
+// RENDERIZAÇÃO
+// ============================================================
+function iaGer_renderCard(item, idx) {
+  var cores = {
+    critico: { bg:'rgba(239,68,68,0.1)', bd:'rgba(239,68,68,0.3)', tc:'#EF4444' },
+    aviso:   { bg:'rgba(234,179,8,0.1)', bd:'rgba(234,179,8,0.3)', tc:'#EAB308' },
+    sugestao:{ bg:'rgba(59,130,246,0.1)', bd:'rgba(59,130,246,0.3)', tc:'#3B82F6' }
+  };
+  var c = cores[item.tipo] || cores.aviso;
+  var acaoBtn = '';
+  if (item.acao) {
+    acaoBtn = '<button onclick="iaGerente_pedirAutorizacao('+idx+')" style="margin-top:10px;padding:7px 14px;border-radius:8px;border:none;background:'+c.tc+';color:#fff;font-weight:800;font-size:0.75rem;cursor:pointer">✍️ '+item.acao.label+'</button>';
+  }
+  return '<div style="background:'+c.bg+';border:1px solid '+c.bd+';border-radius:12px;padding:14px 16px;margin-bottom:8px">'
+    +'<div style="display:flex;align-items:flex-start;gap:10px">'
+    +'<span style="font-size:1.2rem;flex-shrink:0">'+item.icone+'</span>'
+    +'<div style="flex:1">'
+    +'<div style="font-size:0.84rem;font-weight:800;color:'+c.tc+';margin-bottom:4px">'+item.titulo+'</div>'
+    +'<div style="font-size:0.8rem;line-height:1.5">'+item.msg+'</div>'
+    +acaoBtn+'</div></div></div>';
+}
+
+function iaGer_renderSection(titulo, icone, items, cor, startIdx) {
+  if (!items.length) return '';
+  var html = '<div style="display:flex;align-items:center;gap:8px;margin:14px 0 8px">'
+    +'<span>'+icone+'</span>'
+    +'<span style="font-size:0.8rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:'+cor+'">'+titulo+'</span>'
+    +'<span style="font-size:0.72rem;padding:2px 8px;border-radius:20px;background:rgba(0,0,0,0.3);color:'+cor+';font-weight:800;font-family:monospace">'+items.length+'</span>'
+    +'</div>';
+  items.forEach(function(item, i){ html += iaGer_renderCard(item, startIdx + i); });
+  return html;
+}
+
+function iaGer_mkCard(icone, label, val, cor) {
+  return '<div style="background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;text-align:center">'
+    +'<div style="font-size:1.3rem">'+icone+'</div>'
+    +'<div style="font-size:1.5rem;font-weight:900;color:'+cor+';font-family:monospace">'+val+'</div>'
+    +'<div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.8px">'+label+'</div>'
+    +'</div>';
+}
+
+// ============================================================
+// AÇÃO PRINCIPAL: analisar
+// ============================================================
+window.iaGerente_analisar = function() {
+  var statusEl = document.getElementById('ia-ger-status');
+  var btn = document.getElementById('btn-ia-analisar');
+  if (statusEl) { statusEl.style.display='block'; statusEl.textContent='⏳ Analisando sistema...'; }
+  if (btn) { btn.disabled=true; btn.textContent='⏳ Analisando...'; }
+
+  setTimeout(function() {
+    try {
+      var dados = iaGer_coletarDados();
+      var alertas = iaGer_gerarAlertas(dados);
+      window._iaGerAlertas = alertas;
+      window._iaGerDados = dados;
+
+      var sumEl = document.getElementById('ia-ger-summary');
+      if (sumEl) {
+        sumEl.innerHTML =
+          iaGer_mkCard('🔴','Críticos',alertas.criticos.length,'#EF4444') +
+          iaGer_mkCard('🟡','Avisos',alertas.avisos.length,'#EAB308') +
+          iaGer_mkCard('💡','Sugestões',alertas.sugestoes.length,'#3B82F6') +
+          iaGer_mkCard('📋','Total',alertas.criticos.length+alertas.avisos.length+alertas.sugestoes.length,'#A855F7');
+      }
+
+      var allHtml = '';
+      allHtml += iaGer_renderSection('Pontos Críticos','🔴',alertas.criticos,'#EF4444',0);
+      allHtml += iaGer_renderSection('Avisos','🟡',alertas.avisos,'#EAB308',alertas.criticos.length);
+      allHtml += iaGer_renderSection('Sugestões de Melhoria','💡',alertas.sugestoes,'#3B82F6',alertas.criticos.length+alertas.avisos.length);
+
+      if (!allHtml) {
+        allHtml = '<div style="text-align:center;padding:40px;font-size:0.9rem"><div style="font-size:2rem;margin-bottom:10px">✅</div><b>Tudo certo!</b><br><span style="font-size:0.8rem">Nenhuma anomalia encontrada no sistema.</span></div>';
+      }
+
+      var cEl = document.getElementById('ia-ger-criticos');
+      if (cEl) cEl.innerHTML = allHtml;
+      var aEl = document.getElementById('ia-ger-avisos');
+      if (aEl) aEl.innerHTML = '';
+      var sEl = document.getElementById('ia-ger-sugestoes');
+      if (sEl) sEl.innerHTML = '';
+
+      if (statusEl) statusEl.style.display='none';
+      if (btn) { btn.disabled=false; btn.innerHTML='🔍 Analisar Sistema'; }
+    } catch(e) {
+      if (statusEl) { statusEl.textContent='❌ Erro na análise: '+e.message; }
+      if (btn) { btn.disabled=false; btn.innerHTML='🔍 Analisar Sistema'; }
+    }
+  }, 100);
+};
+
+// ============================================================
+// AUTORIZAÇÃO
+// ============================================================
+window.iaGerente_pedirAutorizacao = function(idx) {
+  var alertas = window._iaGerAlertas;
+  if (!alertas) return;
+  var todos = alertas.criticos.concat(alertas.avisos).concat(alertas.sugestoes);
+  var item = todos[idx];
+  if (!item || !item.acao) return;
+  _iaGerPendingAction = item.acao.fn;
+  var modal = document.getElementById('ia-ger-modal');
+  var desc = document.getElementById('ia-ger-modal-desc');
+  if (!modal || !desc) return;
+  desc.innerHTML = '<b>Ação proposta pela IA:</b><br><br>' + item.acao.label + '<br><br>'
+    + '<span style="color:var(--mu);font-size:0.78rem">Esta ação <b>não pode ser desfeita</b> automaticamente.</span>';
+  modal.style.display = 'flex';
+};
+
+window.iaGerente_autorizar = function() {
+  var modal = document.getElementById('ia-ger-modal');
+  if (modal) modal.style.display = 'none';
+  if (typeof _iaGerPendingAction === 'function') {
+    try { _iaGerPendingAction(); } catch(e) { alert('Erro: ' + e.message); }
+    _iaGerPendingAction = null;
+    setTimeout(window.iaGerente_analisar, 500);
+  }
+};
+
+window.iaGerente_cancelar = function() {
+  var modal = document.getElementById('ia-ger-modal');
+  if (modal) modal.style.display = 'none';
+  _iaGerPendingAction = null;
+};
+
+// ============================================================
+// ANÁLISE COM IA GEMINI
+// ============================================================
+window.iaGerente_analisarComIA = function() {
+  var chave = localStorage.getItem('slj_gemini_key');
+  if (!chave) {
+    alert('Configure a chave do Google Gemini em Configurações → Chave da IA para usar este recurso.');
+    return;
+  }
+
+  var geminiDiv = document.getElementById('ia-ger-gemini');
+  var geminiTxt = document.getElementById('ia-ger-gemini-txt');
+  if (!geminiDiv || !geminiTxt) return;
+
+  geminiDiv.style.display = 'block';
+  geminiTxt.innerHTML = '<div style="font-size:0.82rem;font-family:monospace">⏳ Consultando IA Gemini...</div>';
+
+  var dados = iaGer_coletarDados();
+  var alertas = iaGer_gerarAlertas(dados);
+  var linhas = [];
+  linhas.push('Você é um gerente experiente de uma franquia de sucos (Suco Laranjinha, Sumaré-SP).');
+  linhas.push('Analise os dados abaixo e faça um diagnóstico gerencial completo com linguagem simples e direta.\n');
+
+  if (dados.mesesDRE.length > 0) {
+    linhas.push('=== DRE '+dados.year+' ===');
+    dados.mesesDRE.forEach(function(m) {
+      var c = m.col;
+      var f = function(v){ return 'R$'+v.toFixed(0); };
+      linhas.push(m.nome+': Fat='+f(c.fat)+' | Gastos='+f(c.gst)+' | Lucro='+f(c.lucro)+' | Margem='+c.mg.toFixed(1)+'%');
+    });
+    linhas.push('');
+  }
+
+  var izsAlerta = dados.insumos.filter(function(ins){ var q=dados.estqReal[ins.id]||0; var crit=parseFloat(ins.estqCritico)||0; return q<=0||(crit>0&&q<=crit); });
+  if (izsAlerta.length > 0) {
+    linhas.push('=== ALERTAS DE ESTOQUE ===');
+    izsAlerta.forEach(function(ins){ linhas.push('- '+ins.nome+': qtd='+(dados.estqReal[ins.id]||0)+' (crítico: '+(ins.estqCritico||0)+')'); });
+    linhas.push('');
+  }
+
+  var venc = dados.contasPagar.filter(function(c){ return c.status!=='pago' && c.vencimento && c.vencimento < dados.hoje; });
+  if (venc.length > 0) {
+    linhas.push('=== CONTAS VENCIDAS ===');
+    linhas.push(venc.length+' contas vencidas, total: R$'+venc.reduce(function(s,c){return s+(parseFloat(c.valor)||0);},0).toFixed(0));
+    linhas.push('');
+  }
+
+  linhas.push('=== ALERTAS DO SISTEMA ===');
+  linhas.push('Críticos: '+alertas.criticos.length+', Avisos: '+alertas.avisos.length+', Sugestões: '+alertas.sugestoes.length);
+  alertas.criticos.slice(0,5).forEach(function(a){ linhas.push('🔴 '+a.titulo+': '+a.msg.slice(0,100)); });
+  alertas.avisos.slice(0,5).forEach(function(a){ linhas.push('🟡 '+a.titulo+': '+a.msg.slice(0,80)); });
+
+  linhas.push('\n=== INSTRUÇÕES ===');
+  linhas.push('Responda em português brasileiro com linguagem de gerente, direta e prática.');
+  linhas.push('Estruture em 4 seções com emojis:\n1. 📊 SITUAÇÃO GERAL\n2. 🚨 PRIORIDADES IMEDIATAS (máx 4 ações urgentes)\n3. 📈 O QUE ESTÁ BEM\n4. 🗓️ FOCO DA PRÓXIMA SEMANA');
+  linhas.push('Seja objetivo. Máximo 350 palavras.');
+
+  var prompt = linhas.join('\n');
+  var modelo = localStorage.getItem('slj_gemini_modelo') || 'gemini-2.0-flash';
+
+  fetch('https://generativelanguage.googleapis.com/v1beta/models/'+modelo+':generateContent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': chave },
+    body: JSON.stringify({ contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.7,maxOutputTokens:1200} })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
+    var text = '';
+    try { text = data.candidates[0].content.parts.map(function(p){return p.text||'';}).join(''); } catch(e) {}
+    if (!text && data.error) text = '❌ Erro: '+data.error.message;
+    if (!text) text = '❌ Sem resposta da IA.';
+
+    var html = '';
+    text.split('\n').forEach(function(line){
+      line = line.trim();
+      if (!line) { html += '<div style="height:5px"></div>'; return; }
+      while (line.indexOf('**') >= 0) {
+        var s1=line.indexOf('**'), s2=line.indexOf('**',s1+2);
+        if(s2<0) break;
+        line = line.slice(0,s1)+'<b>'+line.slice(s1+2,s2)+'</b>'+line.slice(s2+2);
+      }
+      var code0 = line.charCodeAt(0);
+      if (code0 > 127 && line.length < 80) {
+        html += '<div style="font-weight:800;font-size:0.85rem;color:#A855F7;margin:12px 0 6px">'+line+'</div>';
+      } else if (line.charAt(0)==='-' || line.charAt(0)==='*') {
+        html += '<div style="display:flex;gap:6px;margin:4px 0;font-size:0.82rem"><span style="color:#A855F7">▸</span><span>'+line.replace(/^[-*]\s*/,'')+'</span></div>';
+      } else {
+        html += '<div style="font-size:0.82rem;margin:3px 0">'+line+'</div>';
+      }
+    });
+    geminiTxt.innerHTML = html;
+  })
+  .catch(function(err){
+    geminiTxt.innerHTML = '<div style="color:#EF4444;font-size:0.82rem">❌ Erro ao conectar: '+err.message+'</div>';
+  });
+};
+
+// Auto-analisar ao entrar na página
+var _iaGerOrigShowPg = window.showPg;
+window.showPg = function(id, btn) {
+  if (typeof _iaGerOrigShowPg === 'function') _iaGerOrigShowPg(id, btn);
+  if (id === 'ia-gerente') {
+    setTimeout(window.iaGerente_analisar, 400);
+  }
+};
+
+})();
+</script>
