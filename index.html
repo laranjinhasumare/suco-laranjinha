@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.237</title>
+<title>Suco Laranjinha -- PDV v1.6.241</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -709,6 +709,7 @@ body.light-mode .hname{background:#F8FAFC !important}
     <button class="nb" onclick="showPgFinanceiro('dre',this)"><span class="ni">📋</span>DRE Consolidado</button>
     <button class="nb" onclick="showPgFinanceiro('contas-receber',this)"><span class="ni">💵</span>Contas a Receber</button>
     <button class="nb" onclick="showPgFinanceiro('contas-pagar',this)"><span class="ni">🧾</span>Contas a Pagar</button>
+    <button class="nb" onclick="showPgFinanceiro('estq-real',this)"><span class="ni">📦</span>Estoque</button>
     <button class="nb" onclick="showPgFinanceiro('fornecedores',this)"><span class="ni">🏪</span>Fornecedores</button>
     <button class="nb" onclick="showPgFinanceiro('ebitda',this)"><span class="ni">📈</span>EBITDA</button>
     <button class="nb" onclick="showPgFinanceiro('custos',this)"><span class="ni">💰</span>Custos</button>
@@ -717,7 +718,6 @@ body.light-mode .hname{background:#F8FAFC !important}
     <button class="nb" onclick="showPgFinanceiro('val',this)"><span class="ni">🏦</span>Valuation</button>
     <button class="nb" onclick="showPgFinanceiro('preco',this)"><span class="ni">💲</span>Precificação</button>
     <button class="nb" onclick="showPgFinanceiro('cmv',this)"><span class="ni">📦</span>CMV</button>
-    <button class="nb" onclick="showPgFinanceiro('estoque',this)"><span class="ni">📋</span>Estoque</button>
     <button class="nb" onclick="showPgFinanceiro('config-pdv',this)"><span class="ni">⚙️</span>Configurações</button>
     <div style="height:1px;background:var(--bd);margin:8px 0"></div>
     <div style="font-size:9px;color:#A855F7;padding:2px 10px 4px;font-family:monospace;text-transform:uppercase;letter-spacing:1px">🤖 Inteligência</div>
@@ -1982,6 +1982,27 @@ body.light-mode .hname{background:#F8FAFC !important}
   </div>
 </div>
 
+<div id="pg-estq-real" class="pg" style="padding-bottom:40px">
+  <div class="cd">
+    <div class="ct" style="margin-bottom:12px">📦 Estoque de Insumos</div>
+    <!-- Barra de ações e pesquisa -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      <input id="estq-busca-inp" type="text" placeholder="🔍 Pesquisar insumo..." oninput="estqRealRender()"
+        style="flex:1;min-width:160px;padding:8px 12px;border-radius:9px;border:1.5px solid var(--bd);background:var(--bg);color:var(--tx);font-size:0.85rem">
+      <select id="estq-filtro-sel" onchange="estqRealRender()"
+        style="padding:8px 10px;border-radius:9px;border:1.5px solid var(--bd);background:var(--bg);color:var(--tx);font-size:0.82rem;cursor:pointer">
+        <option value="todos">Todos</option>
+        <option value="criticos">⚠️ Estoque baixo</option>
+        <option value="zerados">🔴 Zerados</option>
+      </select>
+      <button onclick="insumoNovo()" style="padding:8px 14px;border-radius:9px;border:none;background:var(--g);color:#fff;font-weight:800;font-size:0.78rem;cursor:pointer">+ Novo</button>
+      <button onclick="estqImportarValorizado()" style="padding:8px 14px;border-radius:9px;border:1.5px solid var(--b);background:transparent;color:var(--b);font-weight:800;font-size:0.78rem;cursor:pointer">🔄 Importar</button>
+      <button onclick="estqGerarListaComprasPDF()" style="padding:8px 14px;border-radius:9px;border:none;background:var(--b);color:#fff;font-weight:800;font-size:0.78rem;cursor:pointer">📄 PDF Compras</button>
+    </div>
+    <div id="estq-real-container2"></div>
+  </div>
+</div>
+
 <div id="pg-fornecedores" class="pg" style="padding-bottom:40px"></div>
 
 <div id="pg-contas" class="pg" style="padding-bottom:40px">
@@ -2288,7 +2309,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.237';
+var APP_VERSION = 'v1.6.241';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -2645,6 +2666,7 @@ function renderPg(id) {
     if (id === 'cmv')   { render_cmv_oee(); return; }
     if (id === 'disc')   { render_disc(); return; }
     if (id === 'estoque') { render_estoque(); return; }
+    if (id === 'estq-real') { if (typeof estqRealRender === 'function') estqRealRender(); estqRealRender2(); return; }
     if (id === 'contas-pagar') { if (typeof cpRender === 'function') cpRender(); return; }
     if (id === 'fornecedores') { if (typeof fornRender === 'function') fornRender(); return; }
     if (id === 'contas-receber') { if (typeof crRender === 'function') crRender(); return; }
@@ -7557,12 +7579,10 @@ function receitaRenderPanel(cod) {
 
   var insumos = insumoGetAll();
 
-  // Unidades conforme unidBase do insumo
+  // Unidades: usa todas as unidades cadastradas no sistema (slj_unidades)
   var unOpts = function(sel, insId) {
-    var ins = insumos.find(function(x){ return x.id === insId; });
-    var base = ins ? ins.unidBase : 'g';
-    var opts = base==='g' ? ['g','kg'] : base==='ml' ? ['ml','L'] : ['unid','pç','cx','pct'];
-    if (sel && opts.indexOf(sel)===-1) opts.unshift(sel);
+    var opts = umGetAll(); // pega todas as unidades cadastradas
+    if (sel && opts.indexOf(sel)===-1) opts = [sel].concat(opts);
     return opts.map(function(u){
       return '<option value="'+u+'"'+(u===sel?' selected':'')+'>'+u+'</option>';
     }).join('');
@@ -7671,7 +7691,12 @@ window.receitaRemoveIng = function(cod, idx) {
 function receitaColetarInputs(cod, rec) {
   var panel = document.getElementById('rec-panel-'+cod);
   if (!panel) return rec;
-  var ings = [];
+  // Preservar insumoId do _recTemp (o botão de busca não tem atributo DOM)
+  var ingsBase = (rec && rec.ingredientes) ? rec.ingredientes : [];
+  var ings = ingsBase.map(function(ing) {
+    return { qtde: ing.qtde||'', unid: ing.unid||'g', insumoId: ing.insumoId||'' };
+  });
+  // Sobrescrever qtde e unid com o que está nos inputs do DOM
   panel.querySelectorAll('[data-rec-qtde]').forEach(function(el,i) {
     if (!ings[i]) ings[i] = {qtde:'',unid:'g',insumoId:''};
     ings[i].qtde = el.value;
@@ -7680,10 +7705,7 @@ function receitaColetarInputs(cod, rec) {
     if (!ings[i]) ings[i] = {qtde:'',unid:'g',insumoId:''};
     ings[i].unid = el.value;
   });
-  panel.querySelectorAll('[data-rec-ins]').forEach(function(el,i) {
-    if (!ings[i]) ings[i] = {qtde:'',unid:'g',insumoId:''};
-    ings[i].insumoId = el.value;
-  });
+  // insumoId NÃO é coletado do DOM — fica no _recTemp via receitaSelecionarInsumo
   var prep = panel.querySelector('textarea');
   rec.ingredientes = ings;
   if (prep) rec.preparo = prep.value;
@@ -7736,6 +7758,12 @@ window.receitaAbrirBuscaInsumo = function(cod, idx) {
   // Fechar ao clicar no fundo
   modal.onclick = function(e) { if (e.target === modal) receitaFecharBuscaInsumo(); };
 
+  // Auto-importar do estoque valorizado se catálogo estiver vazio
+  if (!insumoGetAll().length) {
+    var qtdImp = insumoImportarDeEstoqueValorizado();
+    if (qtdImp > 0) SLJ_TOAST('✅ ' + qtdImp + ' insumos importados do estoque!', 'g');
+  }
+
   // Limpar e renderizar lista completa
   var inp = document.getElementById('rec-busca-inp');
   if (inp) inp.value = '';
@@ -7749,6 +7777,16 @@ window.receitaFecharBuscaInsumo = function() {
   if (modal) modal.style.display = 'none';
 };
 
+window.receitaImportarInsumos = function() {
+  var qtd = insumoImportarDeEstoqueValorizado();
+  if (qtd > 0) {
+    SLJ_TOAST('✅ ' + qtd + ' insumos importados do estoque!', 'g');
+    receitaBuscaFiltrar(document.getElementById('rec-busca-inp') ? document.getElementById('rec-busca-inp').value : '');
+  } else {
+    SLJ_TOAST('Nenhum item novo encontrado no Estoque Valorizado', 'y');
+  }
+};
+
 window.receitaBuscaFiltrar = function(q) {
   var lista = document.getElementById('rec-busca-lista');
   if (!lista) return;
@@ -7757,7 +7795,17 @@ window.receitaBuscaFiltrar = function(q) {
   var filtrados = term ? insumos.filter(function(ins){ return ins.nome.toLowerCase().indexOf(term) >= 0; }) : insumos;
 
   if (!filtrados.length) {
-    lista.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mu);font-size:0.82rem">Nenhum insumo encontrado.<br><span style="font-size:0.75rem">Cadastre em Estoque → Estoque Real → + Novo Insumo</span></div>';
+    var todosCad = insumoGetAll().length;
+    if (!todosCad) {
+      // Nenhum insumo cadastrado — oferecer importação direta
+      lista.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mu);font-size:0.82rem">'
+        + 'Nenhum insumo cadastrado ainda.<br><br>'
+        + '<button onclick="receitaImportarInsumos()" style="padding:10px 20px;border-radius:10px;border:none;background:var(--b);color:#fff;font-weight:800;cursor:pointer;font-size:0.85rem">🔄 Importar do Estoque</button>'
+        + '<br><small style="font-size:0.72rem;margin-top:8px;display:block">Ou cadastre em Estoque → Estoque Real → + Novo Insumo</small>'
+        + '</div>';
+    } else {
+      lista.innerHTML = '<div style="text-align:center;padding:20px;color:var(--mu);font-size:0.82rem">Nenhum insumo encontrado para "<b>' + (q||'') + '</b>".</div>';
+    }
     return;
   }
 
@@ -8110,6 +8158,133 @@ window.estqGerarListaCompras = function() {
   }
   document.getElementById('modal-lista-compras-txt').value = txt;
   modal.style.display = 'flex';
+};
+
+// ══════════════════════════════════════════════════════════
+// ESTOQUE REAL — Tela separada com pesquisa e filtros
+// ══════════════════════════════════════════════════════════
+function estqRealRender2() {
+  var container = document.getElementById('estq-real-container2');
+  if (!container) return;
+  var insumos = insumoGetAll();
+  var estq = estqRealGet();
+  var busca = ((document.getElementById('estq-busca-inp')||{}).value||'').toLowerCase().trim();
+  var filtro = ((document.getElementById('estq-filtro-sel')||{}).value)||'todos';
+
+  if (!insumos.length) {
+    container.innerHTML = '<div style="text-align:center;padding:32px 16px;color:var(--mu)">'
+      + '<div style="font-size:2.5rem;margin-bottom:8px">📦</div>'
+      + '<div style="font-weight:800;font-size:1rem;margin-bottom:12px">Nenhum insumo cadastrado</div>'
+      + '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">'
+      + '<button onclick="insumoNovo();estqRealRender2()" style="padding:10px 20px;border-radius:10px;border:none;background:var(--g);color:#fff;font-weight:800;cursor:pointer">+ Novo Insumo</button>'
+      + '<button onclick="estqImportarValorizado()" style="padding:10px 20px;border-radius:10px;border:none;background:var(--b);color:#fff;font-weight:800;cursor:pointer">🔄 Importar do Estoque Valorizado</button>'
+      + '</div></div>';
+    return;
+  }
+
+  // Aplicar filtros
+  var lista = insumos.filter(function(ins) {
+    if (busca && ins.nome.toLowerCase().indexOf(busca) < 0) return false;
+    var qtd = estq[ins.id] || 0;
+    if (filtro === 'criticos') return ins.estqCritico > 0 && qtd <= ins.estqCritico;
+    if (filtro === 'zerados') return qtd <= 0;
+    return true;
+  });
+
+  // Painel de críticos no topo (apenas vista geral)
+  var criticos = insumos.filter(function(ins){ return ins.estqCritico > 0 && (estq[ins.id]||0) <= ins.estqCritico; });
+  var html = '';
+  if (criticos.length && filtro === 'todos' && !busca) {
+    html += '<div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:12px;padding:12px 14px;margin-bottom:14px">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+      + '<span style="font-size:0.78rem;font-weight:900;color:#dc2626">⚠️ PRECISAM DE COMPRA (' + criticos.length + ')</span>'
+      + '<button onclick="estqGerarListaComprasPDF()" style="margin-left:auto;padding:4px 10px;border-radius:7px;border:none;background:#dc2626;color:#fff;font-weight:800;font-size:0.72rem;cursor:pointer">📄 Gerar PDF</button>'
+      + '</div>'
+      + criticos.map(function(ins){
+          var qtd = estq[ins.id] || 0;
+          return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid #fecaca">'
+            + '<span style="flex:1;font-weight:700;font-size:0.82rem;color:#991b1b">'+escHtml(ins.nome)+'</span>'
+            + '<span style="font-size:0.78rem;color:#dc2626;font-family:monospace">'
+            + estqFmtQtd(qtd, ins.unidBase) + ' / crítico: ' + estqFmtQtd(ins.estqCritico, ins.unidBase)
+            + '</span></div>';
+        }).join('')
+      + '</div>';
+  }
+
+  if (!lista.length) {
+    html += '<div style="text-align:center;padding:24px;color:var(--mu);font-size:0.85rem">Nenhum insumo encontrado.</div>';
+    container.innerHTML = html;
+    return;
+  }
+
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">';
+  lista.forEach(function(ins) {
+    var qtd = estq[ins.id] || 0;
+    var isCrit = ins.estqCritico > 0 && qtd <= ins.estqCritico;
+    var cor = isCrit ? '#dc2626' : (qtd <= 0 ? 'var(--mu)' : 'var(--g)');
+    var bg = isCrit ? '#fef2f2' : 'var(--c2)';
+    var border = isCrit ? '1.5px solid #fca5a5' : '1px solid var(--bd)';
+    html += '<div style="background:'+bg+';border:'+border+';border-radius:12px;padding:12px">'
+      + '<div style="font-weight:800;font-size:0.88rem;color:var(--tx);margin-bottom:8px">'+escHtml(ins.nome)+'</div>'
+      + '<div style="font-size:1.3rem;font-weight:900;color:'+cor+';font-family:monospace;margin-bottom:4px">'+estqFmtQtd(qtd, ins.unidBase)+'</div>'
+      + (ins.estqCritico > 0 ? '<div style="font-size:0.68rem;color:var(--mu);margin-bottom:8px">Crítico: '+estqFmtQtd(ins.estqCritico, ins.unidBase)+'</div>' : '<div style="margin-bottom:8px"></div>')
+      + '<div style="display:flex;gap:5px;flex-wrap:wrap">'
+      + '<button onclick="estqEntradaManual(&quot;'+ins.id+'&quot;)" style="flex:1;padding:5px 6px;border-radius:7px;border:none;background:var(--g);color:#fff;font-weight:800;font-size:0.7rem;cursor:pointer">+ Entrada</button>'
+      + '<button onclick="estqCorrigir(&quot;'+ins.id+'&quot;)" title="Corrigir qtd" style="padding:5px 8px;border-radius:7px;border:1.5px solid var(--bd);background:transparent;color:var(--tx);font-size:0.7rem;cursor:pointer">✏️</button>'
+      + '<button onclick="insumoEditarNome(&quot;'+ins.id+'&quot;)" title="Editar nome" style="padding:5px 8px;border-radius:7px;border:1.5px solid var(--b);background:transparent;color:var(--b);font-size:0.7rem;cursor:pointer">📝</button>'
+      + '<button onclick="insumoExcluir(&quot;'+ins.id+'&quot;)" title="Excluir" style="padding:5px 8px;border-radius:7px;border:1.5px solid #fca5a5;background:transparent;color:#dc2626;font-size:0.7rem;cursor:pointer">🗑️</button>'
+      + '</div></div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// Editar apenas o nome do insumo
+window.insumoEditarNome = function(id) {
+  var arr = insumoGetAll();
+  var idx = arr.findIndex(function(x){return x.id===id;});
+  if (idx < 0) return;
+  var ins = arr[idx];
+  var novo = prompt('Editar nome do insumo:', ins.nome);
+  if (!novo || !novo.trim()) return;
+  arr[idx].nome = novo.trim();
+  insumoSaveAll(arr);
+  estqRealRender();
+  estqRealRender2();
+  SLJ_TOAST('✅ Nome atualizado: ' + novo.trim(), 'g');
+};
+
+// Gerar PDF de lista de compras
+window.estqGerarListaComprasPDF = function() {
+  var insumos = insumoGetAll();
+  var estq = estqRealGet();
+  var lista = insumos.filter(function(ins){ return (estq[ins.id]||0) <= (ins.estqCritico > 0 ? ins.estqCritico : 0); });
+  if (!lista.length) { SLJ_TOAST('Nenhum item abaixo do nível crítico! 👍', 'g'); return; }
+  var data = new Date().toLocaleDateString('pt-BR');
+  var rows = lista.map(function(ins){
+    var qtd = estq[ins.id] || 0;
+    return '<tr>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid #eee">'+escHtml(ins.nome)+'</td>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;color:#dc2626">'+estqFmtQtd(qtd, ins.unidBase)+'</td>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;color:#666">'+estqFmtQtd(ins.estqCritico||0, ins.unidBase)+'</td>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid #eee;min-width:120px"></td>'
+      +'</tr>';
+  }).join('');
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Lista de Compras</title>'
+    +'<style>body{font-family:Arial,sans-serif;padding:24px;color:#111}h2{color:#ea580c}'
+    +'table{width:100%;border-collapse:collapse}th{background:#ea580c;color:#fff;padding:9px 12px;text-align:left}'
+    +'@media print{.no-print{display:none}}</style></head><body>'
+    +'<h2>📋 Lista de Compras — Suco Laranjinha</h2>'
+    +'<p style="color:#666;font-size:13px">Gerado em: '+data+' &nbsp;|&nbsp; '+lista.length+' item(s) para comprar</p>'
+    +'<table><thead><tr>'
+    +'<th>Insumo</th><th style="text-align:right">Estoque atual</th>'
+    +'<th style="text-align:right">Nível crítico</th><th>Observação / Qtde a comprar</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table><br>'
+    +'<button class="no-print" onclick="window.print()" style="padding:10px 24px;background:#ea580c;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">🖨️ Imprimir / Salvar PDF</button>'
+    +'</body></html>';
+  var win = window.open('', '_blank');
+  if (win) { win.document.write(html); win.document.close(); }
+  else { SLJ_TOAST('Permita popups no navegador para gerar o PDF', 'y'); }
 };
 
 // ══════════════════════════════════════════════════════════
@@ -11315,12 +11490,15 @@ function cpRender() {
     var dt = String(d.data || '').split('-').reverse().join('/');
     (d.itens || []).forEach(function(it, i) {
       total += parseFloat(it.valor) || 0;
+      var qtdeStr = (it.qtde && it.qtde > 0) ? String(it.qtde) : '—';
+      var unidStr = it.unidade ? _cpEsc(it.unidade) : '—';
       linhas += '<tr style="border-top:' + (i === 0 ? '2px solid var(--bd)' : '1px solid var(--bd)') + '">'
         + '<td style="padding:7px 8px;white-space:nowrap">' + (i === 0 ? dt : '') + '</td>'
         + '<td style="padding:7px 8px;font-weight:700">' + (i === 0 ? _cpEsc(d.fornecedor || '—') : '') + '</td>'
         + '<td style="padding:7px 8px">' + _cpEsc(it.desc) + '</td>'
         + '<td style="padding:7px 8px;color:var(--o);font-weight:700">' + _cpEsc(_cpCatNome(it.cat)) + '</td>'
-        + '<td style="padding:7px 8px;text-align:right;white-space:nowrap;color:var(--mu)">' + (it.qtde && it.qtde > 0 && it.qtde !== 1 ? it.qtde : (it.qtde === 1 ? '1' : '—')) + (it.unidade ? ' <small>' + _cpEsc(it.unidade) + '</small>' : '') + '</td>'
+        + '<td style="padding:7px 8px;text-align:right;white-space:nowrap;color:var(--mu)">' + qtdeStr + '</td>'
+        + '<td style="padding:7px 8px;text-align:center;white-space:nowrap;color:var(--mu);font-size:0.72rem">' + unidStr + '</td>'
         + '<td style="padding:7px 8px;text-align:right;white-space:nowrap;color:var(--mu)">' + (it.valor_unit && it.valor_unit > 0 ? _cpMoney(it.valor_unit) : '—') + '</td>'
         + '<td style="padding:7px 8px;text-align:right;font-weight:800;white-space:nowrap">' + _cpMoney(parseFloat(it.valor) || 0) + '</td>'
         + '<td style="padding:7px 8px;text-align:right;white-space:nowrap">' + (i === 0
@@ -11333,7 +11511,7 @@ function cpRender() {
   var w = document.getElementById('cp-lista');
   w.innerHTML = linhas
     ? '<table style="width:100%;border-collapse:collapse;font-size:0.8rem"><thead><tr style="text-align:left;color:var(--mu);font-size:0.68rem;text-transform:uppercase">'
-      + '<th style="padding:6px 8px">Data</th><th style="padding:6px 8px">Fornecedor</th><th style="padding:6px 8px">Item</th><th style="padding:6px 8px">Linha do DRE</th><th style="padding:6px 8px;text-align:right">Qtde</th><th style="padding:6px 8px;text-align:right">Vl.Unit</th><th style="padding:6px 8px;text-align:right">Total</th><th></th></tr></thead><tbody>' + linhas + '</tbody></table>'
+      + '<th style="padding:6px 8px">Data</th><th style="padding:6px 8px">Fornecedor</th><th style="padding:6px 8px">Item</th><th style="padding:6px 8px">Linha do DRE</th><th style="padding:6px 8px;text-align:right">Qtde</th><th style="padding:6px 8px;text-align:center">Un</th><th style="padding:6px 8px;text-align:right">Vl.Unit</th><th style="padding:6px 8px;text-align:right">Total</th><th></th></tr></thead><tbody>' + linhas + '</tbody></table>'
     : '<div style="color:var(--mu);font-size:0.85rem;padding:14px 4px">Nenhum lançamento neste mês.</div>';
   document.getElementById('cp-total').textContent = _cpMoney(total);
   var temChave = !!localStorage.getItem(CP_IA_KEY);
@@ -11498,7 +11676,7 @@ function _cpEstqDesenhar() {
   var container = document.getElementById('cp-estq-linhas');
   if (!container) return;
   var insumos = insumoGetAll();
-  var unids = ['g','kg','ml','L','unid','pç','cx','pct'];
+  var unids = umGetAll(); // pega todas as unidades cadastradas no sistema
   var html = '';
   _cpEstqLinhas.forEach(function(lin, i) {
     var ins = insumos.filter(function(x){return x.id===lin.insumoId;})[0];
@@ -11526,6 +11704,52 @@ function _cpEstqDesenhar() {
 }
 
 // Aplicar entradas de estoque ao salvar CP
+// Auto-integrar itens do CP com Estoque Real de Insumos (por nome)
+function _cpAutoIntegrarEstoqueReal(itens) {
+  if (!itens || !itens.length) return;
+  var insumos = insumoGetAll();
+  if (!insumos.length) return;
+  var atualizados = [];
+  itens.forEach(function(it) {
+    var desc = String(it.desc || '').trim();
+    var qtde = parseFloat(it.qtde) || 1;
+    var unidCP = _estNormUnid(it.unidade || 'unid');
+    if (!desc || qtde <= 0) return;
+    // Buscar insumo por similaridade de nome
+    var descNorm = _estNorm(desc);
+    var tokensCP = _estExpandir(descNorm);
+    var melhor = null; var melhorScore = 0;
+    insumos.forEach(function(ins) {
+      var nomeNorm = _estNorm(ins.nome);
+      var score = 0;
+      if (nomeNorm === descNorm) { score = 100; }
+      else if (descNorm.indexOf(nomeNorm) >= 0 && nomeNorm.length >= 3) { score = 85; }
+      else if (nomeNorm.indexOf(descNorm) >= 0 && descNorm.length >= 3) { score = 80; }
+      else {
+        var tokensEst = _estExpandir(nomeNorm);
+        var pw = tokensCP.filter(function(p){ return p.length >= 3; });
+        var pe = tokensEst.filter(function(p){ return p.length >= 3; });
+        if (pe.length && pe.every(function(p){ return tokensCP.indexOf(p) >= 0 || descNorm.indexOf(p) >= 0; })) score = Math.max(score, 70);
+        if (pw.length && pw.every(function(p){ return tokensEst.indexOf(p) >= 0 || nomeNorm.indexOf(p) >= 0; })) score = Math.max(score, 65);
+        var comuns = pw.filter(function(p){ return p.length >= 4 && (tokensEst.indexOf(p) >= 0 || nomeNorm.indexOf(p) >= 0); });
+        if (comuns.length >= 1) score = Math.max(score, 55);
+      }
+      if (score > melhorScore) { melhorScore = score; melhor = ins; }
+    });
+    if (melhor && melhorScore >= 55) {
+      // Converter qtde da unidade do CP para unidBase do insumo
+      var qtdeConv = _estConverterQtd(qtde, unidCP, melhor.unidBase);
+      estqEntradaCP(melhor.id, qtdeConv, melhor.unidBase);
+      atualizados.push(melhor.nome + ' +' + qtdeConv + melhor.unidBase);
+    }
+  });
+  if (atualizados.length) {
+    setTimeout(function(){
+      SLJ_TOAST('📦 Estoque atualizado: ' + atualizados.slice(0,3).join(', ') + (atualizados.length > 3 ? ' e mais ' + (atualizados.length-3) : ''), 'g');
+    }, 800);
+  }
+}
+
 function _cpEstqAplicar() {
   if (!_cpEstqLinhas || !_cpEstqLinhas.length) return;
   _cpEstqLinhas.forEach(function(lin) {
@@ -11868,6 +12092,7 @@ window.cpSalvarEditor = function() {
     var obj = { desc: String(it.desc || '').trim(), valor: _r2(parseFloat(it.valor) || 0), cat: it.cat || 'var|mercado' };
     if (it.qtde && parseFloat(it.qtde) > 0) obj.qtde = parseFloat(it.qtde);
     if (it.valor_unit && parseFloat(it.valor_unit) > 0) obj.valor_unit = parseFloat(it.valor_unit);
+    if (it.unidade) obj.unidade = String(it.unidade).trim(); // ← salva unidade de medida
     return obj;
   }).filter(function(it) { return it.valor > 0; });
   if (!itens.length) { SLJ_TOAST('Informe pelo menos um item com valor', 'r'); return; }
@@ -11882,8 +12107,10 @@ window.cpSalvarEditor = function() {
   cpSave(arr);
   if (_cpFotoPend) cpFotoSalvar(novo.id, _cpFotoPend).catch(function() {});
   var total = itens.reduce(function(s, it) { return s + it.valor; }, 0);
-  _cpEstqAplicar(); // Aplicar entradas de estoque real (insumos)
+  _cpEstqAplicar(); // Aplicar entradas de estoque real (insumos — painel manual)
   _cpEstqValorizadoAplicar(itens, data); // Atualizar estoque valorizado automaticamente
+  // Auto-match: cada item da NF → insumo do catálogo → entra no Estoque Real na unidBase correta
+  _cpAutoIntegrarEstoqueReal(itens);
   cpFecharEditor();
   var mesEl = document.getElementById('cp-mes'); if (mesEl) mesEl.value = data.slice(0, 7);
   cpRender();
