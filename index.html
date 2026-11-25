@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.235</title>
+<title>Suco Laranjinha -- PDV v1.6.236</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -2288,7 +2288,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.235';
+var APP_VERSION = 'v1.6.236';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -11565,6 +11565,52 @@ var _CP_CAT_GRUPO = {
 function _estNorm(s) {
   return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim();
 }
+// Mapa de abreviações comuns de notas fiscais → nome genérico
+var _EST_SINONIMOS = {
+  'LTE':'LEITE','LEIT':'LEITE','REQUEIJAO':'REQUEIJAO','REQJ':'REQUEIJAO',
+  'MANTEIGA':'MANTEIGA','MNT':'MANTEIGA',
+  'IOGURTE':'IOGURTE','IOGT':'IOGURTE','YOG':'IOGURTE',
+  'QUEIJO':'QUEIJO','QJO':'QUEIJO',
+  'OVO':'OVO','OVOS':'OVO',
+  'CENOURA':'CENOURA','CEN':'CENOURA',
+  'BANANA':'BANANA','BAN':'BANANA',
+  'LARANJA':'LARANJA','LAR':'LARANJA',
+  'LIMAO':'LIMAO','LIM':'LIMAO',
+  'MORANGO':'MORANGO','MOR':'MORANGO',
+  'ABACAXI':'ABACAXI','ABA':'ABACAXI',
+  'MELANCIA':'MELANCIA','MEL':'MEL',
+  'ACUCAR':'ACUCAR','ACU':'ACUCAR','SUGAR':'ACUCAR',
+  'FARINHA':'FARINHA','FAR':'FARINHA',
+  'OLEO':'OLEO','OLE':'OLEO',
+  'SAL':'SAL',
+  'AGUA':'AGUA','AGU':'AGUA',
+  'POLPA':'POLPA','POL':'POLPA',
+  'GENGIBRE':'GENGIBRE','GENG':'GENGIBRE',
+  'COUVE':'COUVE','COU':'COUVE',
+  'ESPINAFRE':'ESPINAFRE','ESP':'ESPINAFRE',
+  'SALSA':'SALSA',
+  'HORTELA':'HORTELA',
+  'CHIA':'CHIA',
+  'AVEIA':'AVEIA','AVE':'AVEIA',
+  'MEL':'MEL',
+  'COCO':'COCO',
+  'CONDENSADO':'LEITE CONDENSADO','COND':'LEITE CONDENSADO',
+  'CREME':'CREME',
+  'CHOCOLATE':'CHOCOLATE','CHOC':'CHOCOLATE',
+  'TAPIOCA':'TAPIOCA','TAP':'TAPIOCA',
+  'AMENDOIM':'AMENDOIM','AMEND':'AMENDOIM',
+  'CASTANHA':'CASTANHA','CAST':'CASTANHA',
+  'GRANOLA':'GRANOLA','GRAN':'GRANOLA',
+};
+function _estExpandir(nome) {
+  // Retorna array de tokens expandidos (original + sinonimos)
+  var tokens = nome.split(/[\s\/\-\.]+/).filter(function(t){ return t.length >= 2; });
+  var extras = [];
+  tokens.forEach(function(t) {
+    if (_EST_SINONIMOS[t]) extras.push(_EST_SINONIMOS[t]);
+  });
+  return tokens.concat(extras);
+}
 function _estBuscarItem(nomeCP, key) {
   var n = _estNorm(nomeCP);
   if (!n || n.length < 2) return null;
@@ -11576,24 +11622,32 @@ function _estBuscarItem(nomeCP, key) {
   var est = ESTOQUE_DATA[key];
   if (!est || !est.grupos) return null;
   var melhor = null, melhorScore = 0;
+  var tokensCP = _estExpandir(n);
   for (var gi = 0; gi < est.grupos.length; gi++) {
     var itens = est.grupos[gi].itens || [];
     for (var ii = 0; ii < itens.length; ii++) {
       var nomeEst = _estNorm(itens[ii].item);
+      var tokensEst = _estExpandir(nomeEst);
       var score = 0;
       if (nomeEst === n) { score = 100; }
-      else if (nomeEst.indexOf(n) >= 0 && n.length >= 3) { score = 80; }
-      else if (n.indexOf(nomeEst) >= 0 && nomeEst.length >= 3) { score = 70; }
+      else if (nomeEst.indexOf(n) >= 0 && n.length >= 3) { score = 85; }
+      else if (n.indexOf(nomeEst) >= 0 && nomeEst.length >= 3) { score = 80; }
       else {
-        var pw = n.split(/\s+/).filter(function(p){ return p.length >= 3; });
-        if (pw.length && pw.every(function(p){ return nomeEst.indexOf(p) >= 0; })) score = 60;
-        var pe = nomeEst.split(/\s+/).filter(function(p){ return p.length >= 3; });
-        if (pe.length && pe.every(function(p){ return n.indexOf(p) >= 0; })) score = Math.max(score, 50);
+        // Verifica cruzamento de tokens expandidos (cobre abreviações de NF)
+        var pw = tokensCP.filter(function(p){ return p.length >= 3; });
+        var pe = tokensEst.filter(function(p){ return p.length >= 3; });
+        // Todos tokens do estoque aparecem no CP (expandido)
+        if (pe.length && pe.every(function(p){ return tokensCP.indexOf(p) >= 0 || n.indexOf(p) >= 0; })) score = Math.max(score, 70);
+        // Todos tokens do CP aparecem no estoque (expandido)
+        if (pw.length && pw.every(function(p){ return tokensEst.indexOf(p) >= 0 || nomeEst.indexOf(p) >= 0; })) score = Math.max(score, 65);
+        // Pelo menos 1 token significativo em comum (>= 4 chars)
+        var comuns = pw.filter(function(p){ return p.length >= 4 && (tokensEst.indexOf(p) >= 0 || nomeEst.indexOf(p) >= 0); });
+        if (comuns.length >= 1) score = Math.max(score, 55);
       }
       if (score > melhorScore) { melhorScore = score; melhor = { key: key, gi: gi, ii: ii }; }
     }
   }
-  return melhorScore >= 50 ? melhor : null;
+  return melhorScore >= 55 ? melhor : null;
 }
 function _estGrupoParaCat(cat, key) {
   var est = ESTOQUE_DATA[key];
