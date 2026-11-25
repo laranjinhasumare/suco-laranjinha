@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.236</title>
+<title>Suco Laranjinha -- PDV v1.6.237</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -2288,7 +2288,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.236';
+var APP_VERSION = 'v1.6.237';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -11659,6 +11659,36 @@ function _estGrupoParaCat(cat, key) {
   }
   return est.grupos.length - 1;
 }
+// Normaliza nome de unidade de medida para forma canônica
+function _estNormUnid(u) {
+  var s = String(u || '').toLowerCase().trim();
+  if (s === 'kilo' || s === 'quilo' || s === 'quilos' || s === 'kilos') return 'kg';
+  if (s === 'grama' || s === 'gramas' || s === 'gr') return 'g';
+  if (s === 'litro' || s === 'litros' || s === 'lt' || s === 'ltr') return 'L';
+  if (s === 'mililitro' || s === 'mililitros' || s === 'ml') return 'mL';
+  if (s === 'caixa' || s === 'caixas') return 'cx';
+  if (s === 'pacote' || s === 'pacotes' || s === 'pct' || s === 'pte') return 'pct';
+  if (s === 'fardo' || s === 'fardos' || s === 'frd') return 'fardo';
+  if (s === 'unidade' || s === 'unidades' || s === 'und' || s === 'unid' || s === '') return 'un';
+  if (s === 'duzia' || s === 'duzia' || s === 'dz') return 'dz';
+  if (s === 'maco' || s === 'maco' || s === 'macos') return 'maço';
+  if (s === 'peca' || s === 'peca' || s === 'pecas' || s === 'pc' || s === 'pç') return 'pç';
+  if (s === 'saco' || s === 'sacos') return 'saco';
+  if (s === 'lata' || s === 'latas') return 'lata';
+  if (s === 'pote' || s === 'potes') return 'pote';
+  return s || 'un';
+}
+// Converte qtde do CP para a unidade do estoque
+function _estConverterQtd(qtdeCP, unidCP, unidEst) {
+  var uc = _estNormUnid(unidCP);
+  var ue = _estNormUnid(unidEst);
+  if (uc === ue) return qtdeCP;
+  if (uc === 'g' && ue === 'kg') return _r2(qtdeCP / 1000);
+  if (uc === 'kg' && ue === 'g') return _r2(qtdeCP * 1000);
+  if (uc === 'mL' && ue === 'L') return _r2(qtdeCP / 1000);
+  if (uc === 'L' && ue === 'mL') return _r2(qtdeCP * 1000);
+  return qtdeCP;
+}
 function _cpEstqValorizadoAplicar(itens, dataDoc) {
   if (!itens || !itens.length) return;
   var d = new Date(dataDoc + 'T12:00:00');
@@ -11673,22 +11703,35 @@ function _cpEstqValorizadoAplicar(itens, dataDoc) {
     var desc = String(it.desc || '').trim();
     if (!desc || !(it.valor > 0)) return;
     var qtde = parseFloat(it.qtde) || 1;
+    var unidCP = _estNormUnid(it.unidade || 'un');
     var preco = (it.valor_unit > 0) ? _r2(it.valor_unit) : (qtde > 0 ? _r2(it.valor / qtde) : _r2(it.valor));
     var encontrado = _estBuscarItem(desc, key);
     var now = new Date();
     var dtStr = now.getDate().toString().padStart(2,'0')+'/'+(now.getMonth()+1).toString().padStart(2,'0')+' '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
     if (encontrado) {
       var item = ESTOQUE_DATA[encontrado.key].grupos[encontrado.gi].itens[encontrado.ii];
-      item.qtd = _r2((item.qtd || 0) + qtde);
+      var unidEst = _estNormUnid(item.unidade || 'un');
+      var qtdeConv = _estConverterQtd(qtde, unidCP, unidEst);
+      item.qtd = _r2((item.qtd || 0) + qtdeConv);
       item.preco = _r2(preco);
       item.subtotal = _r2(item.qtd * item.preco);
       item.updated = dtStr;
-      atualizados.push(item.item);
+      // Preenche unidade se estava vazia
+      if (!item.unidade || item.unidade === 'un') item.unidade = unidEst !== 'un' ? unidEst : unidCP;
+      atualizados.push(item.item + ' (+' + qtdeConv + ' ' + (item.unidade || unidCP) + ')');
       alterou = true;
     } else {
       var gi = _estGrupoParaCat(it.cat || 'var|mercado', key);
-      ESTOQUE_DATA[key].grupos[gi].itens.push({ item: desc, unidade: 'un', qtd: qtde, preco: _r2(preco), subtotal: _r2(qtde * preco), obs: 'Criado via Contas a Pagar', updated: dtStr });
-      novos.push(desc);
+      ESTOQUE_DATA[key].grupos[gi].itens.push({
+        item: desc,
+        unidade: unidCP,
+        qtd: qtde,
+        preco: _r2(preco),
+        subtotal: _r2(qtde * preco),
+        obs: 'Criado via Contas a Pagar',
+        updated: dtStr
+      });
+      novos.push(desc + ' (' + qtde + ' ' + unidCP + ')');
       alterou = true;
     }
   });
@@ -11698,8 +11741,8 @@ function _cpEstqValorizadoAplicar(itens, dataDoc) {
     ESTOQUE_DATA[key].total = _r2(grand);
     est_save_auto(key);
     var msg = '';
-    if (atualizados.length) msg += '📦 Estoque: ' + atualizados.slice(0,3).join(', ') + (atualizados.length > 3 ? ' +' + (atualizados.length-3) : '');
-    if (novos.length) msg += (msg ? ' | ' : '') + '➕ ' + novos.length + ' item(ns) novo(s)';
+    if (atualizados.length) msg += '📦 Estoque: ' + atualizados.slice(0,2).join(', ') + (atualizados.length > 2 ? ' +' + (atualizados.length-2) + ' itens' : '');
+    if (novos.length) msg += (msg ? ' | ' : '') + '➕ Novos: ' + novos.slice(0,2).join(', ') + (novos.length > 2 ? ' +' + (novos.length-2) : '');
     if (msg) setTimeout(function(){ SLJ_TOAST(msg, 'g'); }, 1600);
     console.log('[Estoque] CP→valorizado: atualizados', atualizados, '| novos', novos);
   }
