@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.241</title>
+<title>Suco Laranjinha -- PDV v1.6.251d</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -701,7 +701,8 @@ body.light-mode .hname{background:#F8FAFC !important}
 
     <button class="nb" onclick="showPg('cozinha',this)"><span class="ni">👨‍🍳</span>Cozinha (KDS)</button>
     <button class="nb" onclick="showPg('produtos-pdv',this)"><span class="ni">📦</span>Produtos</button>
-    <button class="nb" onclick="showPg('contas',this)"><span class="ni">💳</span>Contas</button>
+    <button class="nb" onclick="showPg('contas',this)"><span class="ni">💳</span>Vendas</button>
+    <button class="nb" onclick="showPg('estq-real',this)"><span class="ni">📦</span>Estoque</button>
     <div style="height:1px;background:var(--bd);margin:8px 0"></div>
     <div style="font-size:9px;color:var(--mu);padding:2px 10px 4px;font-family:monospace;text-transform:uppercase;letter-spacing:1px">🔒 Financeiro</div>
     <button class="nb" onclick="showPgFinanceiro('dash',this)"><span class="ni">📊</span>Dashboard</button>
@@ -709,7 +710,6 @@ body.light-mode .hname{background:#F8FAFC !important}
     <button class="nb" onclick="showPgFinanceiro('dre',this)"><span class="ni">📋</span>DRE Consolidado</button>
     <button class="nb" onclick="showPgFinanceiro('contas-receber',this)"><span class="ni">💵</span>Contas a Receber</button>
     <button class="nb" onclick="showPgFinanceiro('contas-pagar',this)"><span class="ni">🧾</span>Contas a Pagar</button>
-    <button class="nb" onclick="showPgFinanceiro('estq-real',this)"><span class="ni">📦</span>Estoque</button>
     <button class="nb" onclick="showPgFinanceiro('fornecedores',this)"><span class="ni">🏪</span>Fornecedores</button>
     <button class="nb" onclick="showPgFinanceiro('ebitda',this)"><span class="ni">📈</span>EBITDA</button>
     <button class="nb" onclick="showPgFinanceiro('custos',this)"><span class="ni">💰</span>Custos</button>
@@ -1190,7 +1190,7 @@ body.light-mode .hname{background:#F8FAFC !important}
       <!-- Barra de navegação rápida -->
       <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;justify-content:flex-end">
         <button onclick="showPg('cozinha',this)" style="padding:3px 10px;border-radius:14px;border:1.5px solid var(--bd);background:transparent;color:var(--tx);font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap">🍳 Cozinha</button>
-        <button onclick="showPg('contas',this)" style="padding:3px 10px;border-radius:14px;border:1.5px solid var(--bd);background:transparent;color:var(--tx);font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap">💳 Contas</button>
+        <button onclick="showPg('contas',this)" style="padding:3px 10px;border-radius:14px;border:1.5px solid var(--bd);background:transparent;color:var(--tx);font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap">💳 Vendas</button>
         <button onclick="turnoFechar()" style="padding:3px 10px;border-radius:14px;border:1.5px solid var(--y);background:transparent;color:var(--y);font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap">🔄 Turno</button>
         <button onclick="toggleTheme()" title="Claro / Escuro" style="padding:3px 10px;border-radius:14px;border:1.5px solid var(--bd);background:var(--card);color:var(--tx);font-weight:700;font-size:0.65rem;cursor:pointer;white-space:nowrap">☀️ <span id="theme-lbl-inline">Claro</span></button>
       </div>
@@ -1662,7 +1662,7 @@ body.light-mode .hname{background:#F8FAFC !important}
   <!-- ===== FECHAR TURNO ===== -->
   <div style="background:var(--card);border:1.5px solid var(--bd);border-radius:14px;padding:18px 20px;max-width:480px;margin-top:16px">
     <div style="font-size:0.72rem;font-weight:800;color:var(--y);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">🔄 Fechamento de Turno</div>
-    <div style="font-size:0.78rem;color:var(--mu);margin-bottom:14px">Encerra o turno atual, gera um resumo das vendas e arquiva o histórico. O histórico fica disponível na aba <b>Contas</b> normalmente.</div>
+    <div style="font-size:0.78rem;color:var(--mu);margin-bottom:14px">Encerra o turno atual, gera um resumo das vendas e arquiva o histórico. O histórico fica disponível na aba <b>Vendas</b> normalmente.</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <button onclick="turnoFechar()" style="flex:1;min-width:140px;padding:10px 18px;border-radius:10px;border:none;background:var(--y);color:#000;font-weight:900;font-size:0.9rem;cursor:pointer">🔄 Fechar Turno</button>
       <button onclick="turnoVerHistorico()" style="flex:1;min-width:140px;padding:10px 18px;border-radius:10px;border:1.5px solid var(--bd);background:transparent;color:var(--tx);font-weight:700;font-size:0.82rem;cursor:pointer">📋 Histórico de Turnos</button>
@@ -1987,17 +1987,18 @@ body.light-mode .hname{background:#F8FAFC !important}
     <div class="ct" style="margin-bottom:12px">📦 Estoque de Insumos</div>
     <!-- Barra de ações e pesquisa -->
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
-      <input id="estq-busca-inp" type="text" placeholder="🔍 Pesquisar insumo..." oninput="estqRealRender()"
+      <input id="estq-busca-inp" type="text" placeholder="🔍 Pesquisar insumo..." oninput="estqRealRender2()"
         style="flex:1;min-width:160px;padding:8px 12px;border-radius:9px;border:1.5px solid var(--bd);background:var(--bg);color:var(--tx);font-size:0.85rem">
-      <select id="estq-filtro-sel" onchange="estqRealRender()"
+      <select id="estq-filtro-sel" onchange="estqRealRender2()"
         style="padding:8px 10px;border-radius:9px;border:1.5px solid var(--bd);background:var(--bg);color:var(--tx);font-size:0.82rem;cursor:pointer">
         <option value="todos">Todos</option>
         <option value="criticos">⚠️ Estoque baixo</option>
         <option value="zerados">🔴 Zerados</option>
       </select>
-      <button onclick="insumoNovo()" style="padding:8px 14px;border-radius:9px;border:none;background:var(--g);color:#fff;font-weight:800;font-size:0.78rem;cursor:pointer">+ Novo</button>
-      <button onclick="estqImportarValorizado()" style="padding:8px 14px;border-radius:9px;border:1.5px solid var(--b);background:transparent;color:var(--b);font-weight:800;font-size:0.78rem;cursor:pointer">🔄 Importar</button>
+      <button onclick="insumoNovo();setTimeout(estqRealRender2,300)" style="padding:8px 14px;border-radius:9px;border:none;background:var(--g);color:#fff;font-weight:800;font-size:0.78rem;cursor:pointer">+ Novo</button>
+      <button onclick="estqImportarValorizado();setTimeout(estqRealRender2,300)" style="padding:8px 14px;border-radius:9px;border:1.5px solid var(--b);background:transparent;color:var(--b);font-weight:800;font-size:0.78rem;cursor:pointer">🔄 Importar</button>
       <button onclick="estqGerarListaComprasPDF()" style="padding:8px 14px;border-radius:9px;border:none;background:var(--b);color:#fff;font-weight:800;font-size:0.78rem;cursor:pointer">📄 PDF Compras</button>
+      <button onclick="estqDiag()" style="padding:8px 14px;border-radius:9px;border:1.5px solid #f59e0b;background:transparent;color:#d97706;font-weight:800;font-size:0.78rem;cursor:pointer">🔍 Diagnóstico</button>
     </div>
     <div id="estq-real-container2"></div>
   </div>
@@ -2309,7 +2310,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.241';
+var APP_VERSION = 'v1.6.250';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -2446,13 +2447,16 @@ function db_init_seeds() {
         // O Firebase carrega os dados reais logo após e sobrescreve o seed
     }
 
-    // Seed de insumos: se ainda não existir nenhum, importar do ESTOQUE_DATA
+    // Limpar slj_insumos vazio/corrompido para permitir sincronização do Firebase
     try {
-        var insExist = JSON.parse(localStorage.getItem(INSUMOS_KEY) || '[]');
-        if (!insExist.length) {
-            insumoImportarDeEstoqueValorizado();
+        var _insCheck = localStorage.getItem('slj_insumos');
+        if (_insCheck !== null) {
+            var _insParsed = JSON.parse(_insCheck);
+            if (!Array.isArray(_insParsed) || _insParsed.length === 0) {
+                localStorage.removeItem('slj_insumos'); // limpar para Firebase poder restaurar
+            }
         }
-    } catch(e) {}
+    } catch(e) { localStorage.removeItem('slj_insumos'); }
 }
 
 // ============================================================
@@ -2573,12 +2577,12 @@ function showPg(id, btn) {
     if (btn) btn.classList.add('active');
     // Ocultar stats do topbar nas telas operacionais (mas manter o título sempre visível)
     var _ts = document.querySelector('.ts');
-    var _pgOper = ['caixa','cozinha','produtos-pdv','contas','config-pdv','contas-pagar','contas-receber'];
+    var _pgOper = ['caixa','cozinha','produtos-pdv','contas','estq-real','config-pdv','contas-pagar','contas-receber'];
     if(_ts) _ts.style.display = (_pgOper.indexOf(id) >= 0) ? 'none' : 'flex';
 
     var T = {dash:'📊 Dashboard','dre-mes':'📝 DRE por Mês',dre:'📋 DRE Consolidado',
              ebitda:'📈 EBITDA',custos:'💰 Custos',abc:'🔤 Curva ABC',disc:'⚠️ Desvios',val:'🏦 Valuation','preco':'💲 Precificação','cmv':'📦 CMV','estoque':'📋 Estoque',
-             'contas-pagar':'🧾 Contas a Pagar','fornecedores':'🏪 Fornecedores','contas-receber':'💵 Contas a Receber',caixa:'🖥️ PDV -- Caixa',cozinha:'👨🍳 Cozinha (KDS)','produtos-pdv':'📦 Produtos',contas:'💳 Contas'};
+             'contas-pagar':'🧾 Contas a Pagar','fornecedores':'🏪 Fornecedores','contas-receber':'💵 Contas a Receber',caixa:'🖥️ PDV -- Caixa',cozinha:'👨🍳 Cozinha (KDS)','produtos-pdv':'📦 Produtos',contas:'💳 Vendas','estq-real':'📦 Estoque de Insumos'};
     document.getElementById('tb-title').textContent = T[id] || id;
     if (window.innerWidth < 900) closeSB();
     setTimeout(function(){ renderPg(id); }, 60);
@@ -2666,7 +2670,20 @@ function renderPg(id) {
     if (id === 'cmv')   { render_cmv_oee(); return; }
     if (id === 'disc')   { render_disc(); return; }
     if (id === 'estoque') { render_estoque(); return; }
-    if (id === 'estq-real') { if (typeof estqRealRender === 'function') estqRealRender(); estqRealRender2(); return; }
+    if (id === 'estq-real') {
+      // Diagnóstico detalhado no console
+      try {
+        var _diag = localStorage.getItem('slj_insumos');
+        console.log('[ESTQ] slj_insumos raw tipo:', typeof _diag, 'len:', _diag ? _diag.length : 0);
+        if (_diag) {
+          try {
+            var _dp = JSON.parse(_diag);
+            console.log('[ESTQ] slj_insumos parsed:', Array.isArray(_dp) ? 'ARRAY len='+_dp.length : 'OBJETO keys='+Object.keys(_dp).length);
+          } catch(ex) { console.log('[ESTQ] slj_insumos parse error:', ex.message); }
+        }
+      } catch(ex2) {}
+      if (typeof window.estqRealRender2 === 'function') window.estqRealRender2(); else if (typeof estqRealRender2 === 'function') estqRealRender2(); return;
+    }
     if (id === 'contas-pagar') { if (typeof cpRender === 'function') cpRender(); return; }
     if (id === 'fornecedores') { if (typeof fornRender === 'function') fornRender(); return; }
     if (id === 'contas-receber') { if (typeof crRender === 'function') crRender(); return; }
@@ -5183,13 +5200,25 @@ onValue(ref(db, 'slj/extras'), function(snap) {
                 // Só restaura se não tiver valor local já definido
                 // (prioridade: local > Firebase, exceto gemini_key que sempre sincroniza)
                 var localVal = localStorage.getItem(k);
-                var alwaysSync = (k === 'slj_gemini_key' || k === 'slj_gemini_modelo');
+                // slj_insumos e slj_estq_real sempre sincronizam do Firebase (dados críticos)
+                var alwaysSync = (k === 'slj_gemini_key' || k === 'slj_gemini_modelo' || k === 'slj_insumos' || k === 'slj_estq_real');
                 if (!localVal || alwaysSync) {
                     var v = remote[k];
+                    // Firebase converte arrays em objetos {0:..., 1:...} — converter de volta para array
+                    if ((k === 'slj_insumos' || k === 'slj_cats' || k === 'slj_receitas' || k === 'slj_cats_excluidas' || k === 'slj_unidades' || k === 'slj_fornecedores' || k === 'slj_turnos_historico') && v !== null && typeof v === 'object' && !Array.isArray(v)) {
+                        v = Object.keys(v).sort(function(a,b){return Number(a)-Number(b);}).map(function(i){return v[i];});
+                    }
                     localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
                 }
             }
         });
+        // Se a tela de Estoque estiver ativa, re-renderizar após sincronização
+        try {
+            var _pgEstq = document.getElementById('pg-estq-real');
+            if (_pgEstq && _pgEstq.classList.contains('active') && typeof window.estqRealRender2 === 'function') {
+                window.estqRealRender2();
+            }
+        } catch(e) {}
         // Atualizar display da chave IA se ela foi restaurada
         var chaveRestaurada = localStorage.getItem('slj_gemini_key');
         if (chaveRestaurada) {
@@ -6925,16 +6954,12 @@ function pdvAdicionarProd(p) {
   var _ehBeb=(_catComObs.indexOf(p.cat||'')>=0);
   if(ex){
     ex.qty++;
-    // Deduzir 1 unidade a mais do estoque ao incrementar qty
-    estqDeduzirProduto(p.cod, 1);
   } else {
     lista.push({
       cod:p.cod,nome:p.nome,preco:p.preco,qty:1,cat:(p.cat||''),
       obs: _ehBeb?'Com açúcar':'',
       gelo:_ehBeb?'Com gelo':''
     });
-    // Deduzir 1 unidade do estoque ao adicionar novo item
-    estqDeduzirProduto(p.cod, 1);
   }
   pdvRenderItens(); pdvRenderMesas(); pdvSalvar();
   // Retorna foco ao campo de código para digitação rápida
@@ -7005,7 +7030,12 @@ function pdvQtyMais(idx){
 }
 function pdvQtyMenos(idx){
   var l=PDV.pedidos[PDV.mesaAtual]||[];
-  if(l[idx]){l[idx].qty--;if(l[idx].qty<=0)l.splice(idx,1);pdvRenderItens();pdvRenderMesas();pdvSalvar();}
+  if(l[idx]){
+    var _item=l[idx];
+    _item.qty--;
+    if(_item.qty<=0) l.splice(idx,1);
+    pdvRenderItens();pdvRenderMesas();pdvSalvar();
+  }
 }
 window.pdvSetObs=function(idx,obs){
   var l=PDV.pedidos[PDV.mesaAtual]||[];
@@ -7034,9 +7064,6 @@ function pdvCancelarPedido(){
   if(!confirm('Cancelar todos os itens desta mesa?'))return;
   // Reverter estoque de todos os itens do pedido
   var listaCancel = PDV.pedidos[PDV.mesaAtual] || [];
-  listaCancel.forEach(function(item){
-    estqRevertProduto(item.cod, item.qty || 1);
-  });
   PDV.pedidos[PDV.mesaAtual]=[];
   // Se era fila temporária de reabertura, remove do array
   if(PDV.mesaAtual<-1){PDV.filas=PDV.filas.filter(function(f){return f.id!==PDV.mesaAtual;});PDV.mesaAtual=-1;}
@@ -7232,7 +7259,16 @@ function kdsItemPronto(mesaId, idx, u){
   var l=PDV.pedidos[mesaId];
   if(l&&l[idx]){
     var item=l[idx];
+    var feitoAntes = item.kdsQtFeito || 0;
     _kdsAlternarUnidade(item,u);
+    var feitoDepois = item.kdsQtFeito || 0;
+    var delta = feitoDepois - feitoAntes;
+    // delta > 0 = itens foram marcados prontos → deduzir estoque
+    // delta < 0 = itens foram desmarcados → reverter estoque
+    var _dbgRec = receitaGetAll ? receitaGetAll() : {};
+    console.log('[KDS] item.cod='+item.cod+' delta='+delta+' receita='+JSON.stringify(_dbgRec[item.cod]||null)+' estqDeduzirExists='+(typeof estqDeduzirProduto));
+    if (delta > 0 && typeof estqDeduzirProduto === 'function') estqDeduzirProduto(item.cod, delta);
+    if (delta < 0 && typeof estqRevertProduto === 'function') estqRevertProduto(item.cod, -delta);
     pdvRenderKDS();
     pdvSalvar();
   }
@@ -7242,7 +7278,12 @@ window.kdsPendenteItemPronto=function(pendIdx,itemIdx,u){
   if(!PDV.pendentesEntrega||!PDV.pendentesEntrega[pendIdx]) return;
   var item=PDV.pendentesEntrega[pendIdx].itens[itemIdx];
   if(!item) return;
+  var feitoAntes = item.kdsQtFeito || 0;
   _kdsAlternarUnidade(item,u);
+  var feitoDepois = item.kdsQtFeito || 0;
+  var delta = feitoDepois - feitoAntes;
+  if (delta > 0 && typeof estqDeduzirProduto === 'function') estqDeduzirProduto(item.cod, delta);
+  if (delta < 0 && typeof estqRevertProduto === 'function') estqRevertProduto(item.cod, -delta);
   pdvRenderKDS();
   pdvSalvar();
 };
@@ -7926,7 +7967,15 @@ function insumoImportarDeEstoqueValorizado() {
 }
 
 function insumoGetAll() {
-  try { return JSON.parse(localStorage.getItem(INSUMOS_KEY) || '[]'); } catch(e) { return []; }
+  try {
+    var v = JSON.parse(localStorage.getItem(INSUMOS_KEY) || '[]');
+    // Firebase pode ter convertido array em objeto {0:...,1:...} — corrigir
+    if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
+      v = Object.keys(v).sort(function(a,b){return Number(a)-Number(b);}).map(function(i){return v[i];});
+      localStorage.setItem(INSUMOS_KEY, JSON.stringify(v)); // salvar corrigido
+    }
+    return Array.isArray(v) ? v : [];
+  } catch(e) { return []; }
 }
 function insumoSaveAll(arr) {
   localStorage.setItem(INSUMOS_KEY, JSON.stringify(arr));
@@ -8047,7 +8096,7 @@ window.estqCorrigir = function(id) {
   if (isNaN(novo) || novo < 0) { SLJ_TOAST('Valor inválido', 'r'); return; }
   estq[id] = novo;
   estqRealSave(estq);
-  estqRealRender();
+  window.estqRealRender2();
   SLJ_TOAST('✅ Estoque corrigido: ' + estqFmtQtd(novo, ins.unidBase), 'g');
 };
 
@@ -8163,7 +8212,35 @@ window.estqGerarListaCompras = function() {
 // ══════════════════════════════════════════════════════════
 // ESTOQUE REAL — Tela separada com pesquisa e filtros
 // ══════════════════════════════════════════════════════════
-function estqRealRender2() {
+// ══ DIAGNÓSTICO DE ESTOQUE ══
+window.estqDiag = function() {
+  var raw = localStorage.getItem('slj_insumos');
+  var msg = '';
+  if (!raw) {
+    msg = '❌ slj_insumos: VAZIO no localStorage';
+  } else {
+    try {
+      var p = JSON.parse(raw);
+      if (Array.isArray(p)) {
+        msg = '✅ slj_insumos: ARRAY com ' + p.length + ' itens';
+        if (p.length > 0) msg += '\nPrimeiro: ' + JSON.stringify(p[0]);
+      } else if (typeof p === 'object') {
+        msg = '⚠️ slj_insumos: OBJETO (Firebase bug) com ' + Object.keys(p).length + ' chaves — corrigindo...';
+        var arr = Object.keys(p).sort(function(a,b){return Number(a)-Number(b);}).map(function(i){return p[i];});
+        localStorage.setItem('slj_insumos', JSON.stringify(arr));
+        msg += '\n✅ Corrigido! ' + arr.length + ' itens agora. Recarregue a tela.';
+        setTimeout(estqRealRender2, 200);
+      } else {
+        msg = '❌ slj_insumos: tipo inesperado: ' + typeof p;
+      }
+    } catch(e) {
+      msg = '❌ slj_insumos: JSON inválido: ' + e.message + '\nRaw: ' + raw.substring(0,200);
+    }
+  }
+  alert('[DIAGNÓSTICO ESTOQUE]\n' + msg);
+};
+
+window.estqRealRender2 = function estqRealRender2() {
   var container = document.getElementById('estq-real-container2');
   if (!container) return;
   var insumos = insumoGetAll();
@@ -8172,13 +8249,46 @@ function estqRealRender2() {
   var filtro = ((document.getElementById('estq-filtro-sel')||{}).value)||'todos';
 
   if (!insumos.length) {
+    // Sem insumos — verificar se há dado no localStorage bruto
+    var _rawLS = localStorage.getItem('slj_insumos');
+    var _rawInfo = '';
+    if (_rawLS) {
+      try {
+        var _rawParsed = JSON.parse(_rawLS);
+        if (typeof _rawParsed === 'object' && !Array.isArray(_rawParsed)) {
+          // É um objeto — Firebase converteu o array! Corrigir agora
+          var _arrFixed = Object.keys(_rawParsed).sort(function(a,b){return Number(a)-Number(b);}).map(function(i){return _rawParsed[i];});
+          if (_arrFixed.length > 0) {
+            localStorage.setItem('slj_insumos', JSON.stringify(_arrFixed));
+            estqRealRender2(); // tentar novamente já corrigido
+            return;
+          }
+        }
+        _rawInfo = ' (localStorage: ' + (Array.isArray(_rawParsed) ? _rawParsed.length + ' itens' : typeof _rawParsed) + ')';
+      } catch(e) { _rawInfo = ' (localStorage: dado inválido)'; }
+    } else {
+      _rawInfo = ' (localStorage: vazio)';
+    }
     container.innerHTML = '<div style="text-align:center;padding:32px 16px;color:var(--mu)">'
-      + '<div style="font-size:2.5rem;margin-bottom:8px">📦</div>'
-      + '<div style="font-weight:800;font-size:1rem;margin-bottom:12px">Nenhum insumo cadastrado</div>'
+      + '<div style="font-size:2.5rem;margin-bottom:8px">⏳</div>'
+      + '<div style="font-weight:800;font-size:1rem;margin-bottom:8px">Carregando do servidor...</div>'
+      + '<div style="font-size:0.82rem;color:var(--mu);margin-bottom:4px">Aguardando sincronização com Firebase</div>'
+      + '<div style="font-size:0.72rem;color:var(--mu);margin-bottom:16px;font-family:monospace">' + _rawInfo + '</div>'
       + '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">'
-      + '<button onclick="insumoNovo();estqRealRender2()" style="padding:10px 20px;border-radius:10px;border:none;background:var(--g);color:#fff;font-weight:800;cursor:pointer">+ Novo Insumo</button>'
-      + '<button onclick="estqImportarValorizado()" style="padding:10px 20px;border-radius:10px;border:none;background:var(--b);color:#fff;font-weight:800;cursor:pointer">🔄 Importar do Estoque Valorizado</button>'
+      + '<button onclick="insumoNovo();estqRealRender2()" style="padding:8px 16px;border-radius:9px;border:none;background:var(--g);color:#fff;font-weight:800;font-size:0.82rem;cursor:pointer">+ Novo Insumo</button>'
+      + '<button onclick="estqImportarValorizado();setTimeout(estqRealRender2,500)" style="padding:8px 16px;border-radius:9px;border:1.5px solid var(--b);background:transparent;color:var(--b);font-weight:800;font-size:0.82rem;cursor:pointer">🔄 Importar do Estoque Valorizado</button>'
       + '</div></div>';
+    // Tentar novamente em 1s, 3s e 6s enquanto tela estiver ativa
+    [1000, 3000, 6000].forEach(function(ms) {
+      setTimeout(function() {
+        var c2 = document.getElementById('estq-real-container2');
+        if (!c2) return;
+        var pg = document.getElementById('pg-estq-real');
+        if (!pg || !pg.classList.contains('active')) return;
+        var _ins2 = insumoGetAll();
+        if (_ins2.length) estqRealRender2();
+      }, ms);
+    });
     return;
   }
 
@@ -8217,29 +8327,72 @@ function estqRealRender2() {
     return;
   }
 
-  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">';
-  lista.forEach(function(ins) {
+  // Montar mapa insumoId → unidade usada nas receitas
+  var _recMap = {};
+  try {
+    var _recs = JSON.parse(localStorage.getItem('slj_receitas') || '{}');
+    Object.values(_recs).forEach(function(rec) {
+      if (!rec.ingredientes) return;
+      rec.ingredientes.forEach(function(ing) {
+        if (ing.insumoId && ing.unid) _recMap[ing.insumoId] = ing.unid;
+      });
+    });
+  } catch(e) {}
+
+  // Cabeçalho da tabela
+  html += '<div style="display:grid;grid-template-columns:1fr 60px 120px 120px 150px;gap:0;border-radius:10px;overflow:hidden;border:1px solid var(--bd)">'
+    + '<div style="display:contents">'
+    + '<div style="background:var(--c3,var(--c2));padding:7px 12px;font-weight:900;font-size:0.68rem;color:var(--mu);border-bottom:1px solid var(--bd)">INSUMO</div>'
+    + '<div style="background:var(--c3,var(--c2));padding:7px 8px;font-weight:900;font-size:0.68rem;color:var(--mu);border-bottom:1px solid var(--bd);text-align:center">UNID</div>'
+    + '<div style="background:var(--c3,var(--c2));padding:7px 8px;font-weight:900;font-size:0.68rem;color:var(--mu);border-bottom:1px solid var(--bd);text-align:right">ESTOQUE ATUAL</div>'
+    + '<div style="background:var(--c3,var(--c2));padding:7px 8px;font-weight:900;font-size:0.68rem;color:var(--mu);border-bottom:1px solid var(--bd);text-align:right">ESTOQUE MÍNIMO</div>'
+    + '<div style="background:var(--c3,var(--c2));padding:7px 8px;font-weight:900;font-size:0.68rem;color:var(--mu);border-bottom:1px solid var(--bd);text-align:center">AÇÕES</div>'
+    + '</div>';
+  lista.forEach(function(ins, _i) {
     var qtd = estq[ins.id] || 0;
-    var isCrit = ins.estqCritico > 0 && qtd <= ins.estqCritico;
+    var minimo = parseFloat(ins.estqCritico) || 0;
+    var isCrit = minimo > 0 && qtd <= minimo;
     var cor = isCrit ? '#dc2626' : (qtd <= 0 ? 'var(--mu)' : 'var(--g)');
-    var bg = isCrit ? '#fef2f2' : 'var(--c2)';
-    var border = isCrit ? '1.5px solid #fca5a5' : '1px solid var(--bd)';
-    html += '<div style="background:'+bg+';border:'+border+';border-radius:12px;padding:12px">'
-      + '<div style="font-weight:800;font-size:0.88rem;color:var(--tx);margin-bottom:8px">'+escHtml(ins.nome)+'</div>'
-      + '<div style="font-size:1.3rem;font-weight:900;color:'+cor+';font-family:monospace;margin-bottom:4px">'+estqFmtQtd(qtd, ins.unidBase)+'</div>'
-      + (ins.estqCritico > 0 ? '<div style="font-size:0.68rem;color:var(--mu);margin-bottom:8px">Crítico: '+estqFmtQtd(ins.estqCritico, ins.unidBase)+'</div>' : '<div style="margin-bottom:8px"></div>')
-      + '<div style="display:flex;gap:5px;flex-wrap:wrap">'
-      + '<button onclick="estqEntradaManual(&quot;'+ins.id+'&quot;)" style="flex:1;padding:5px 6px;border-radius:7px;border:none;background:var(--g);color:#fff;font-weight:800;font-size:0.7rem;cursor:pointer">+ Entrada</button>'
-      + '<button onclick="estqCorrigir(&quot;'+ins.id+'&quot;)" title="Corrigir qtd" style="padding:5px 8px;border-radius:7px;border:1.5px solid var(--bd);background:transparent;color:var(--tx);font-size:0.7rem;cursor:pointer">✏️</button>'
-      + '<button onclick="insumoEditarNome(&quot;'+ins.id+'&quot;)" title="Editar nome" style="padding:5px 8px;border-radius:7px;border:1.5px solid var(--b);background:transparent;color:var(--b);font-size:0.7rem;cursor:pointer">📝</button>'
-      + '<button onclick="insumoExcluir(&quot;'+ins.id+'&quot;)" title="Excluir" style="padding:5px 8px;border-radius:7px;border:1.5px solid #fca5a5;background:transparent;color:#dc2626;font-size:0.7rem;cursor:pointer">🗑️</button>'
-      + '</div></div>';
+    var bg = isCrit ? '#fef2f2' : (_i % 2 === 0 ? 'var(--c2)' : 'var(--bg)');
+    var bdBot = '1px solid var(--bd)';
+    // Unidade: da receita se tiver, senão do cadastro do insumo
+    var unidRec = _recMap[ins.id] || '';
+    var unidDisp = unidRec || ins.unidBase || 'unid';
+    var unidColor = unidRec ? 'var(--b)' : 'var(--mu)';
+    var unidTitle = unidRec ? 'Unidade usada na receita' : 'Unidade base do insumo';
+    html += '<div style="background:'+bg+';padding:7px 12px;border-bottom:'+bdBot+';display:flex;align-items:center;gap:6px;font-weight:700;font-size:0.82rem;color:'+(isCrit?'#991b1b':'var(--tx)')+'">'+escHtml(ins.nome)+(isCrit?'<span style="font-size:0.62rem;background:#fca5a5;color:#991b1b;border-radius:4px;padding:1px 5px;font-weight:900;white-space:nowrap">⚠️</span>':'')+'</div>'
+      + '<div style="background:'+bg+';padding:7px 8px;border-bottom:'+bdBot+';text-align:center;font-weight:800;font-size:0.75rem;color:'+unidColor+'" title="'+unidTitle+'">'+unidDisp+'</div>'
+      + '<div style="background:'+bg+';padding:7px 8px;border-bottom:'+bdBot+';text-align:right;font-family:monospace;font-weight:900;font-size:0.82rem;color:'+cor+'">'+estqFmtQtd(qtd, ins.unidBase)+'</div>'
+      + '<div style="background:'+bg+';padding:5px 8px;border-bottom:'+bdBot+';text-align:right">'
+      +   '<input type="number" min="0" step="0.01" value="'+(minimo||'')+'" placeholder="0"'
+      +   ' title="Estoque mínimo ('+ins.unidBase+')"'
+      +   ' onchange="estqSetMinimo(&quot;'+ins.id+'&quot;, this.value)"'
+      +   ' style="width:80px;padding:3px 6px;border-radius:6px;border:1.5px solid var(--bd);background:transparent;color:var(--tx);font-size:0.78rem;text-align:right;font-family:monospace">'
+      + '</div>'
+      + '<div style="background:'+bg+';padding:5px 8px;border-bottom:'+bdBot+';display:flex;gap:4px;align-items:center;justify-content:center">'
+      + '<button onclick="estqEntradaManual(&quot;'+ins.id+'&quot;)" title="Registrar entrada" style="padding:4px 8px;border-radius:6px;border:none;background:var(--g);color:#fff;font-weight:800;font-size:0.7rem;cursor:pointer">+ Entrada</button>'
+      + '<button onclick="estqCorrigir(&quot;'+ins.id+'&quot;)" title="Corrigir quantidade" style="padding:4px 7px;border-radius:6px;border:1.5px solid var(--bd);background:transparent;color:var(--tx);font-size:0.7rem;cursor:pointer">✏️</button>'
+      + '<button onclick="insumoEditarNome(&quot;'+ins.id+'&quot;)" title="Editar nome" style="padding:4px 7px;border-radius:6px;border:1.5px solid var(--b);background:transparent;color:var(--b);font-size:0.7rem;cursor:pointer">📝</button>'
+      + '<button onclick="insumoExcluir(&quot;'+ins.id+'&quot;)" title="Excluir" style="padding:4px 7px;border-radius:6px;border:1.5px solid #fca5a5;background:transparent;color:#dc2626;font-size:0.7rem;cursor:pointer">🗑️</button>'
+      + '</div>';
   });
   html += '</div>';
   container.innerHTML = html;
-}
+};
 
 // Editar apenas o nome do insumo
+window.estqSetMinimo = function(id, val) {
+  var arr = insumoGetAll();
+  var idx = arr.findIndex(function(x){return x.id===id;});
+  if (idx < 0) return;
+  var novo = parseFloat(String(val).replace(',','.'));
+  if (isNaN(novo) || novo < 0) novo = 0;
+  arr[idx].estqCritico = novo;
+  insumoSaveAll(arr);
+  // Re-renderizar painel de críticos sem redesenhar a tabela inteira
+  window.estqRealRender2();
+};
+
 window.insumoEditarNome = function(id) {
   var arr = insumoGetAll();
   var idx = arr.findIndex(function(x){return x.id===id;});
@@ -8249,8 +8402,7 @@ window.insumoEditarNome = function(id) {
   if (!novo || !novo.trim()) return;
   arr[idx].nome = novo.trim();
   insumoSaveAll(arr);
-  estqRealRender();
-  estqRealRender2();
+  window.estqRealRender2();
   SLJ_TOAST('✅ Nome atualizado: ' + novo.trim(), 'g');
 };
 
@@ -8258,30 +8410,82 @@ window.insumoEditarNome = function(id) {
 window.estqGerarListaComprasPDF = function() {
   var insumos = insumoGetAll();
   var estq = estqRealGet();
-  var lista = insumos.filter(function(ins){ return (estq[ins.id]||0) <= (ins.estqCritico > 0 ? ins.estqCritico : 0); });
-  if (!lista.length) { SLJ_TOAST('Nenhum item abaixo do nível crítico! 👍', 'g'); return; }
+  if (!insumos.length) { SLJ_TOAST('Nenhum insumo cadastrado', 'y'); return; }
   var data = new Date().toLocaleDateString('pt-BR');
+  // Separar críticos dos OK
+  var criticos = insumos.filter(function(ins){
+    var qtd = estq[ins.id] || 0;
+    return ins.estqCritico > 0 && qtd <= ins.estqCritico;
+  });
+  var ok = insumos.filter(function(ins){
+    var qtd = estq[ins.id] || 0;
+    return !(ins.estqCritico > 0 && qtd <= ins.estqCritico);
+  });
+  // Críticos primeiro, depois OK
+  var lista = criticos.concat(ok);
+
+  function fmtQtdCompra(ins, qtdAtual) {
+    var min = parseFloat(ins.estqCritico) || 0;
+    if (min <= 0) return '—';
+    var falta = min - qtdAtual;
+    if (falta <= 0) return '✓ OK';
+    return estqFmtQtd(falta, ins.unidBase);
+  }
+
   var rows = lista.map(function(ins){
     var qtd = estq[ins.id] || 0;
-    return '<tr>'
-      +'<td style="padding:8px 12px;border-bottom:1px solid #eee">'+escHtml(ins.nome)+'</td>'
-      +'<td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;color:#dc2626">'+estqFmtQtd(qtd, ins.unidBase)+'</td>'
-      +'<td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;color:#666">'+estqFmtQtd(ins.estqCritico||0, ins.unidBase)+'</td>'
-      +'<td style="padding:8px 12px;border-bottom:1px solid #eee;min-width:120px"></td>'
+    var isCrit = ins.estqCritico > 0 && qtd <= ins.estqCritico;
+    var trBg = isCrit ? 'background:#fff5f5' : ''; var trClass = isCrit ? '' : 'ok-row';
+    var corAtual = isCrit ? '#dc2626' : '#16a34a';
+    var corCompra = isCrit ? '#dc2626;font-weight:700' : '#666';
+    var qtdCompra = fmtQtdCompra(ins, qtd);
+    return '<tr class="'+trClass+'" style="'+trBg+'">'
+      +'<td style="padding:8px 12px;border-bottom:1px solid #eee;'+(isCrit?'font-weight:700':'')+'">'+escHtml(ins.nome)+(isCrit?' ⚠️':'')+'</td>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;font-family:monospace;color:'+corAtual+'">'+estqFmtQtd(qtd, ins.unidBase)+'</td>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;font-family:monospace;color:#666">'+(ins.estqCritico > 0 ? estqFmtQtd(ins.estqCritico, ins.unidBase) : '—')+'</td>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;font-family:monospace;color:'+corCompra+'">'+qtdCompra+'</td>'
+      +'<td style="padding:8px 12px;border-bottom:1px solid #eee;min-width:140px;color:#999;font-size:12px"></td>'
       +'</tr>';
   }).join('');
-  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Lista de Compras</title>'
-    +'<style>body{font-family:Arial,sans-serif;padding:24px;color:#111}h2{color:#ea580c}'
-    +'table{width:100%;border-collapse:collapse}th{background:#ea580c;color:#fff;padding:9px 12px;text-align:left}'
-    +'@media print{.no-print{display:none}}</style></head><body>'
-    +'<h2>📋 Lista de Compras — Suco Laranjinha</h2>'
-    +'<p style="color:#666;font-size:13px">Gerado em: '+data+' &nbsp;|&nbsp; '+lista.length+' item(s) para comprar</p>'
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Lista de Compras — Suco Laranjinha</title>'
+    +'<style>'
+    +'body{font-family:Arial,sans-serif;padding:24px;color:#111;font-size:14px}'
+    +'h1{color:#ea580c;font-size:20px;margin-bottom:4px}'
+    +'p.sub{color:#666;font-size:12px;margin-bottom:16px}'
+    +'table{width:100%;border-collapse:collapse}'
+    +'th{background:#ea580c;color:#fff;padding:9px 12px;text-align:left;font-size:12px}'
+    +'th.r{text-align:right}'
+    +'tr:hover{background:#fffbf5}'
+    +'.badge{display:inline-block;background:#dc2626;color:#fff;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:8px}'
+    +'@media print{.no-print{display:none}body{padding:12px}}'
+    +'</style></head><body>'
+    +'<h1>📋 Lista de Compras — Suco Laranjinha</h1>'
+    +'<p class="sub">Gerado em: '+data+' &nbsp;|&nbsp; '+insumos.length+' insumo(s) total &nbsp;|&nbsp; <span style="color:#dc2626;font-weight:700">'+criticos.length+' precisam de compra</span></p>'
+    +(criticos.length > 0 ? '<p style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:8px;padding:8px 14px;font-size:12px;color:#991b1b;margin-bottom:12px">⚠️ Itens destacados em vermelho estão abaixo do estoque mínimo. A coluna <b>Qtde a Comprar</b> mostra quanto falta para atingir o mínimo.</p>' : '')
     +'<table><thead><tr>'
-    +'<th>Insumo</th><th style="text-align:right">Estoque atual</th>'
-    +'<th style="text-align:right">Nível crítico</th><th>Observação / Qtde a comprar</th>'
+    +'<th>Insumo</th>'
+    +'<th class="r">Estoque Atual</th>'
+    +'<th class="r">Estoque Mínimo</th>'
+    +'<th class="r">Qtde a Comprar</th>'
+    +'<th>Observação</th>'
     +'</tr></thead><tbody>'+rows+'</tbody></table><br>'
     +'<button class="no-print" onclick="window.print()" style="padding:10px 24px;background:#ea580c;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">🖨️ Imprimir / Salvar PDF</button>'
     +'</body></html>';
+  // Adicionar filtro no topo do PDF
+  var filtroHtml = '<div class="no-print" style="margin-bottom:16px;display:flex;gap:10px;align-items:center">'
+    +'<span style="font-size:13px;font-weight:700;color:#555">Exibir:</span>'
+    +'<button onclick="document.querySelectorAll(\'tr.ok-row\').forEach(function(r){r.style.display=\'\'})" '
+    +'style="padding:6px 14px;border-radius:6px;border:1.5px solid #ea580c;background:#ea580c;color:#fff;font-weight:700;font-size:12px;cursor:pointer">Todos os insumos</button>'
+    +'<button onclick="document.querySelectorAll(\'tr.ok-row\').forEach(function(r){r.style.display=\'none\'})" '
+    +'style="padding:6px 14px;border-radius:6px;border:1.5px solid #dc2626;background:#dc2626;color:#fff;font-weight:700;font-size:12px;cursor:pointer">⚠️ Só os que precisam comprar</button>'
+    +'</div>';
+
+  // Marcar linhas OK com classe
+  html = html.replace(/<tr style="">/g, '<tr class="ok-row" style="">');
+
+  html = html.replace('<table>', filtroHtml + '<table>');
+
   var win = window.open('', '_blank');
   if (win) { win.document.write(html); win.document.close(); }
   else { SLJ_TOAST('Permita popups no navegador para gerar o PDF', 'y'); }
@@ -8936,7 +9140,7 @@ window.turnoFechar = function() {
     +'</div>';
 
     html += '<div style="font-size:0.72rem;color:var(--mu);padding:8px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--bd)">'
-      +'⚠️ O histórico de vendas <b>não será apagado</b> — ficará disponível em Contas. O turno será registrado no Histórico de Turnos.'
+      +'⚠️ O histórico de vendas <b>não será apagado</b> — ficará disponível em Vendas. O turno será registrado no Histórico de Turnos.'
     +'</div>';
   }
 
@@ -8978,7 +9182,7 @@ window.turnoConfirmar = function() {
   _turnoSaveHist(turnos);
 
   // NÃO apaga o historico — apenas registra o turno
-  // (as vendas continuam disponíveis em Contas)
+  // (as vendas continuam disponíveis em Vendas)
   turnoFecharModal();
   if(window.SLJ_TOAST) SLJ_TOAST('✅ Turno fechado! '+hist.length+' venda(s) — '+_turnoFmtMoney(totalGeral), 'g');
   else alert('✅ Turno fechado!\n'+hist.length+' venda(s) — '+_turnoFmtMoney(totalGeral));
