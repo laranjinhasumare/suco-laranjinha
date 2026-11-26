@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.251d</title>
+<title>Suco Laranjinha -- PDV v1.6.255</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -2310,7 +2310,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.250';
+var APP_VERSION = 'v1.6.255';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -8051,6 +8051,20 @@ function estqToBase(qtd, unid) {
   return qtd; // g, ml, unid — já na base
 }
 // Exibe quantidade de forma legível
+function estqFmtNum(qtd, unidBase) {
+  // Só o número, sem a unidade (coluna UNID já está ao lado)
+  if (unidBase === 'g') {
+    if (qtd >= 1000) return (qtd/1000).toFixed(2).replace('.',',');
+    return String(Math.round(qtd));
+  }
+  if (unidBase === 'ml') {
+    if (qtd >= 1000) return (qtd/1000).toFixed(2).replace('.',',');
+    return String(Math.round(qtd));
+  }
+  // qualquer outra unidade — só número, sem texto
+  var v = parseFloat(qtd.toFixed(2));
+  return String(Number.isInteger(v) ? Math.round(v) : v).replace('.',',');
+}
 function estqFmtQtd(qtd, unidBase) {
   if (unidBase === 'g') {
     if (qtd >= 1000) return (qtd/1000).toFixed(2).replace('.',',') + ' kg';
@@ -8060,7 +8074,10 @@ function estqFmtQtd(qtd, unidBase) {
     if (qtd >= 1000) return (qtd/1000).toFixed(2).replace('.',',') + ' L';
     return Math.round(qtd) + ' ml';
   }
-  return qtd.toFixed(2).replace('.',',') + ' unid';
+  // Para unid, pç, cx, etc — mostrar sem decimais se número inteiro
+  var u = unidBase || 'unid';
+  var v = Number.isInteger(qtd) ? qtd : (qtd % 1 === 0 ? qtd : parseFloat(qtd.toFixed(2)));
+  return String(v).replace('.',',') + ' ' + u;
 }
 
 // Entrada manual de estoque
@@ -8068,13 +8085,14 @@ window.estqEntradaManual = function(id) {
   var arr = insumoGetAll();
   var ins = arr.filter(function(x){return x.id===id;})[0];
   if (!ins) return;
-  var qtdStr = prompt('Entrada de estoque: '+ins.nome+'\n\nDigite a quantidade e unidade (ex: 5 kg, 2 L, 100 unid, 500 g):');
+  var unid = ins.unidBase || 'unid';
+  var qtdStr = prompt('Entrada de estoque: '+ins.nome+'\n\nDigite a quantidade em '+unid+':');
   if (!qtdStr) return;
-  var m = qtdStr.trim().match(/^([\d.,]+)\s*([a-zA-Z]+)$/);
-  if (!m) { SLJ_TOAST('Formato inválido. Ex: 5 kg ou 2 L', 'r'); return; }
-  var qtd = parseFloat(m[1].replace(',','.'));
-  var unid = m[2].toLowerCase();
+  // Aceita só número (com vírgula ou ponto)
+  var qtdClean = qtdStr.trim().replace(',','.');
+  var qtd = parseFloat(qtdClean);
   if (isNaN(qtd) || qtd <= 0) { SLJ_TOAST('Quantidade inválida', 'r'); return; }
+  // Converte para base usando a unidade do próprio insumo
   var qtdBase = estqToBase(qtd, unid);
   var estq = estqRealGet();
   estq[id] = (estq[id] || 0) + qtdBase;
@@ -8158,7 +8176,7 @@ function estqRealRender() {
     html += '<div style="background:'+bg+';border:'+border+';border-radius:12px;padding:12px">'
       + '<div style="font-size:0.72rem;color:var(--mu);font-family:monospace;margin-bottom:4px">'+ins.id+'</div>'
       + '<div style="font-weight:800;font-size:0.88rem;color:var(--tx);margin-bottom:8px">'+escHtml(ins.nome)+'</div>'
-      + '<div style="font-size:1.3rem;font-weight:900;color:'+cor+';font-family:monospace;margin-bottom:8px">'+estqFmtQtd(qtd, ins.unidBase)+'</div>'
+      + '<div style="font-size:1.3rem;font-weight:900;color:'+cor+';font-family:monospace;margin-bottom:8px">'+estqFmtNum(qtd, ins.unidBase)+'</div>'
       + (ins.estqCritico > 0 ? '<div style="font-size:0.68rem;color:var(--mu);margin-bottom:8px">Crítico: '+estqFmtQtd(ins.estqCritico, ins.unidBase)+'</div>' : '')
       + '<div style="display:flex;gap:5px;flex-wrap:wrap">'
       + '<button onclick="estqEntradaManual(&quot;'+ins.id+'&quot;)" title="Entrada" style="flex:1;padding:5px 6px;border-radius:7px;border:none;background:var(--g);color:#fff;font-weight:800;font-size:0.7rem;cursor:pointer">+ Entrada</button>'
@@ -8362,7 +8380,7 @@ window.estqRealRender2 = function estqRealRender2() {
     var unidTitle = unidRec ? 'Unidade usada na receita' : 'Unidade base do insumo';
     html += '<div style="background:'+bg+';padding:7px 12px;border-bottom:'+bdBot+';display:flex;align-items:center;gap:6px;font-weight:700;font-size:0.82rem;color:'+(isCrit?'#991b1b':'var(--tx)')+'">'+escHtml(ins.nome)+(isCrit?'<span style="font-size:0.62rem;background:#fca5a5;color:#991b1b;border-radius:4px;padding:1px 5px;font-weight:900;white-space:nowrap">⚠️</span>':'')+'</div>'
       + '<div style="background:'+bg+';padding:7px 8px;border-bottom:'+bdBot+';text-align:center;font-weight:800;font-size:0.75rem;color:'+unidColor+'" title="'+unidTitle+'">'+unidDisp+'</div>'
-      + '<div style="background:'+bg+';padding:7px 8px;border-bottom:'+bdBot+';text-align:right;font-family:monospace;font-weight:900;font-size:0.82rem;color:'+cor+'">'+estqFmtQtd(qtd, ins.unidBase)+'</div>'
+      + '<div style="background:'+bg+';padding:7px 8px;border-bottom:'+bdBot+';text-align:right;font-family:monospace;font-weight:900;font-size:0.82rem;color:'+cor+'">'+estqFmtNum(qtd, ins.unidBase)+'</div>'
       + '<div style="background:'+bg+';padding:5px 8px;border-bottom:'+bdBot+';text-align:right">'
       +   '<input type="number" min="0" step="0.01" value="'+(minimo||'')+'" placeholder="0"'
       +   ' title="Estoque mínimo ('+ins.unidBase+')"'
