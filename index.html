@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.259</title>
+<title>Suco Laranjinha -- PDV v1.6.261</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -821,6 +821,7 @@ body.light-mode .hname{background:#F8FAFC !important}
     <button class="nb" onclick="showPgFinanceiro('preco',this)"><span class="ni">💲</span>Precificação</button>
     <button class="nb" onclick="showPgFinanceiro('cmv',this)"><span class="ni">📦</span>CMV</button>
     <button class="nb" onclick="showPgFinanceiro('config-pdv',this); if(typeof cfgLoginPopulate==='function')cfgLoginPopulate()"><span class="ni">⚙️</span>Configurações</button>
+    <button class="nb" onclick="sljLogout()" style="color:#ef4444"><span class="ni">🚪</span>Sair do sistema</button>
     <div style="height:1px;background:var(--bd);margin:8px 0"></div>
     <div style="font-size:9px;color:#A855F7;padding:2px 10px 4px;font-family:monospace;text-transform:uppercase;letter-spacing:1px">🤖 Inteligência</div>
     <button class="nb" onclick="showPg('ia-gerente',this)" style="background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(168,85,247,0.08));border-left:3px solid #A855F7 !important"><span class="ni">🤖</span>IA Gerente</button>
@@ -2484,7 +2485,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.259';
+var APP_VERSION = 'v1.6.261';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -10898,6 +10899,16 @@ function _sljGenPass(len) {
   return p;
 }
 
+/* ── Logout ────────────────────────────────────────────────── */
+window.sljLogout = function() {
+  try { sessionStorage.removeItem('slj_logged'); } catch(e){}
+  _sljShowOverlay();
+  var userEl = document.getElementById('slj-login-user');
+  var passEl = document.getElementById('slj-login-pass');
+  if (userEl) { userEl.value = ''; userEl.focus(); }
+  if (passEl) passEl.value = '';
+};
+
 /* ── Overlay helpers ───────────────────────────────────────── */
 function _sljShowOverlay() {
   var el = document.getElementById('slj-login-overlay');
@@ -10955,12 +10966,21 @@ window.sljForgotSend = function() {
   var newPass = _sljGenPass(10);
   var newHash = _sljHash(newPass);
 
-  /* Inicializa EmailJS — usa config salva ou fallback */
-  var _ejsCfg = (function(){try{return JSON.parse(localStorage.getItem('slj_emailjs_cfg')||'{}');}catch(e){return {};}})();
-  if (_ejsCfg.serviceId)  EMAILJS_SERVICE_ID  = _ejsCfg.serviceId;
-  if (_ejsCfg.templateId) EMAILJS_TEMPLATE_ID = _ejsCfg.templateId;
-  if (_ejsCfg.publicKey)  EMAILJS_PUBLIC_KEY  = _ejsCfg.publicKey;
-  try { emailjs.init(EMAILJS_PUBLIC_KEY); } catch(e){}
+  /* Inicializa EmailJS — usa sempre as credenciais hardcoded como base garantida */
+  var _svcId  = 'service_50g8j6t';
+  var _tplId  = 'template_2q2vvwz';
+  var _pubKey = 'z41nO3B-VEfqdAMYe';
+  /* Sobrescreve com config salva se existir */
+  try {
+    var _ejsCfg = JSON.parse(localStorage.getItem('slj_emailjs_cfg')||'{}');
+    if (_ejsCfg.serviceId)  _svcId  = _ejsCfg.serviceId;
+    if (_ejsCfg.templateId) _tplId  = _ejsCfg.templateId;
+    if (_ejsCfg.publicKey)  _pubKey = _ejsCfg.publicKey;
+  } catch(e){}
+  EMAILJS_SERVICE_ID  = _svcId;
+  EMAILJS_TEMPLATE_ID = _tplId;
+  EMAILJS_PUBLIC_KEY  = _pubKey;
+  try { emailjs.init(_pubKey); } catch(e){}
 
   var emails = [auth.email1 || SLJ_AUTH_EMAILS[0], auth.email2 || SLJ_AUTH_EMAILS[1]];
   var sent = 0;
