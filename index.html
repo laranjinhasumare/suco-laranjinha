@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.255</title>
+<title>Suco Laranjinha -- PDV v1.6.258</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -668,9 +668,111 @@ body.light-mode .hname{background:#F8FAFC !important}
 #fin-btn-ok  { background:var(--o);color:#fff; }
 #fin-btn-cancel { background:var(--bd);color:var(--tx); }
 
+
+/* ── TELA DE LOGIN ───────────────────────────────────────────── */
+#slj-login-overlay {
+  position:fixed;inset:0;z-index:99999;
+  background:linear-gradient(135deg,#ff6b00 0%,#ff9500 50%,#ffb700 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'DM Sans',sans-serif;
+}
+#slj-login-box {
+  background:#fff;border-radius:20px;padding:40px 36px 32px;
+  width:min(380px,90vw);box-shadow:0 20px 60px rgba(0,0,0,0.25);
+  display:flex;flex-direction:column;align-items:center;gap:0;
+}
+#slj-login-box .slj-logo {
+  width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#ff6b00,#ffb700);
+  display:flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:16px;
+  box-shadow:0 4px 16px rgba(255,107,0,0.4);
+}
+#slj-login-box h2 {
+  font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;
+  color:#1a1a1a;margin:0 0 4px;text-align:center;
+}
+#slj-login-box .slj-sub {
+  font-size:0.78rem;color:#888;margin-bottom:24px;text-align:center;
+}
+#slj-login-box input {
+  width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;
+  border:1.5px solid #e0e0e0;font-size:0.9rem;font-family:'DM Sans',sans-serif;
+  margin-bottom:12px;outline:none;transition:border 0.2s;
+}
+#slj-login-box input:focus { border-color:#ff6b00; }
+#slj-login-btn {
+  width:100%;padding:13px;border-radius:10px;border:none;
+  background:linear-gradient(90deg,#ff6b00,#ffb700);color:#fff;
+  font-size:1rem;font-weight:800;font-family:'Syne',sans-serif;
+  cursor:pointer;margin-top:4px;letter-spacing:0.5px;
+  transition:opacity 0.2s;
+}
+#slj-login-btn:hover { opacity:0.9; }
+#slj-login-err {
+  color:#dc2626;font-size:0.8rem;margin-top:4px;min-height:18px;text-align:center;
+}
+#slj-forgot-link {
+  margin-top:16px;font-size:0.78rem;color:#ff6b00;cursor:pointer;
+  text-decoration:underline;background:none;border:none;font-family:'DM Sans',sans-serif;
+}
+#slj-forgot-link:hover { color:#cc5500; }
+/* ── MODAL ESQUECI SENHA ───────────────────────────────────────── */
+#slj-forgot-overlay {
+  position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,0.5);
+  display:none;align-items:center;justify-content:center;
+}
+#slj-forgot-overlay.open { display:flex; }
+#slj-forgot-box {
+  background:#fff;border-radius:16px;padding:32px 28px;
+  width:min(360px,90vw);box-shadow:0 16px 48px rgba(0,0,0,0.2);
+}
+#slj-forgot-box h3 { font-size:1.1rem;font-weight:800;color:#1a1a1a;margin:0 0 8px; }
+#slj-forgot-box p { font-size:0.82rem;color:#666;margin:0 0 20px;line-height:1.5; }
+#slj-forgot-box input {
+  width:100%;box-sizing:border-box;padding:11px 13px;border-radius:9px;
+  border:1.5px solid #e0e0e0;font-size:0.88rem;margin-bottom:12px;outline:none;
+}
+#slj-forgot-box input:focus { border-color:#ff6b00; }
+.slj-forgot-btns { display:flex;gap:10px;margin-top:4px; }
+.slj-forgot-btns button {
+  flex:1;padding:11px;border-radius:9px;border:none;font-size:0.88rem;
+  font-weight:700;cursor:pointer;
+}
+#slj-forgot-send { background:#ff6b00;color:#fff; }
+#slj-forgot-cancel { background:#f0f0f0;color:#333; }
+#slj-forgot-msg { font-size:0.8rem;min-height:18px;margin-top:6px;text-align:center; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
 <body>
+
+<!-- ══ TELA DE LOGIN ══════════════════════════════════════════ -->
+<div id="slj-login-overlay">
+  <div id="slj-login-box">
+    <div class="slj-logo">🍊</div>
+    <h2>Suco Laranjinha</h2>
+    <p class="slj-sub">Sistema de Gestão — faça login para continuar</p>
+    <input type="text" id="slj-login-user" placeholder="Usuário" autocomplete="username"
+      onkeydown="if(event.key==='Enter')document.getElementById('slj-login-pass').focus()">
+    <input type="password" id="slj-login-pass" placeholder="Senha" autocomplete="current-password"
+      onkeydown="if(event.key==='Enter')sljLogin()">
+    <button id="slj-login-btn" onclick="sljLogin()">Entrar</button>
+    <div id="slj-login-err"></div>
+    <button id="slj-forgot-link" onclick="sljForgotOpen()">Esqueci minha senha</button>
+  </div>
+</div>
+<!-- ══ MODAL ESQUECI SENHA ════════════════════════════════════ -->
+<div id="slj-forgot-overlay">
+  <div id="slj-forgot-box">
+    <h3>🔑 Recuperar senha</h3>
+    <p>Um email com a nova senha temporária será enviado para o email do administrador cadastrado no sistema.</p>
+    <div class="slj-forgot-btns">
+      <button id="slj-forgot-send" onclick="sljForgotSend()">📧 Enviar email</button>
+      <button id="slj-forgot-cancel" onclick="sljForgotClose()">Cancelar</button>
+    </div>
+    <div id="slj-forgot-msg"></div>
+  </div>
+</div>
+
 <button id="hb" onclick="togSB()">☰</button>
 
 <div id="ov" onclick="togSB()"></div>
@@ -718,7 +820,7 @@ body.light-mode .hname{background:#F8FAFC !important}
     <button class="nb" onclick="showPgFinanceiro('val',this)"><span class="ni">🏦</span>Valuation</button>
     <button class="nb" onclick="showPgFinanceiro('preco',this)"><span class="ni">💲</span>Precificação</button>
     <button class="nb" onclick="showPgFinanceiro('cmv',this)"><span class="ni">📦</span>CMV</button>
-    <button class="nb" onclick="showPgFinanceiro('config-pdv',this)"><span class="ni">⚙️</span>Configurações</button>
+    <button class="nb" onclick="showPgFinanceiro('config-pdv',this); if(typeof cfgLoginPopulate==='function')cfgLoginPopulate()"><span class="ni">⚙️</span>Configurações</button>
     <div style="height:1px;background:var(--bd);margin:8px 0"></div>
     <div style="font-size:9px;color:#A855F7;padding:2px 10px 4px;font-family:monospace;text-transform:uppercase;letter-spacing:1px">🤖 Inteligência</div>
     <button class="nb" onclick="showPg('ia-gerente',this)" style="background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(168,85,247,0.08));border-left:3px solid #A855F7 !important"><span class="ni">🤖</span>IA Gerente</button>
@@ -1411,6 +1513,78 @@ body.light-mode .hname{background:#F8FAFC !important}
         <div id="cfg-senha-fin-msg" style="font-size:0.75rem;color:var(--mu)"></div>
       </div>
     </div>
+
+    <!-- ══ ACESSO AO SISTEMA (Login) ═══════════════════════════ -->
+    <div style="border-top:1px solid var(--bd);padding-top:12px;margin-top:4px">
+      <div style="font-size:0.72rem;font-weight:800;color:#f97316;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">🔐 Acesso ao Sistema (Login)</div>
+      <div style="font-size:0.72rem;color:var(--mu);margin-bottom:10px">Altere o usuário e senha de acesso ao sistema. A recuperação de senha envia email via EmailJS.</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div>
+          <label style="font-size:0.7rem;color:var(--mu);font-weight:700;display:block;margin-bottom:3px">USUÁRIO ATUAL</label>
+          <input id="cfg-login-user-atual" type="text" placeholder="Usuário atual"
+            style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.85rem">
+        </div>
+        <div>
+          <label style="font-size:0.7rem;color:var(--mu);font-weight:700;display:block;margin-bottom:3px">NOVO USUÁRIO</label>
+          <input id="cfg-login-user-novo" type="text" placeholder="Novo usuário (opcional)"
+            style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.85rem">
+        </div>
+        <div>
+          <label style="font-size:0.7rem;color:var(--mu);font-weight:700;display:block;margin-bottom:3px">SENHA ATUAL</label>
+          <input id="cfg-login-pass-atual" type="password" placeholder="Senha atual"
+            style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.85rem">
+        </div>
+        <div>
+          <label style="font-size:0.7rem;color:var(--mu);font-weight:700;display:block;margin-bottom:3px">NOVA SENHA</label>
+          <input id="cfg-login-pass-nova" type="password" placeholder="Nova senha"
+            style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.85rem">
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <button onclick="cfgAlterarLoginSistema()" style="padding:8px 18px;border-radius:8px;border:none;background:#f97316;color:#fff;font-weight:800;font-size:0.8rem;cursor:pointer">🔑 Alterar Acesso</button>
+        <div id="cfg-login-msg" style="font-size:0.75rem;color:var(--mu)"></div>
+      </div>
+
+      <div style="font-size:0.7rem;font-weight:800;color:var(--mu);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">📧 Emails para recuperação de senha</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div>
+          <label style="font-size:0.7rem;color:var(--mu);font-weight:700;display:block;margin-bottom:3px">EMAIL 1</label>
+          <input id="cfg-login-email1" type="email" placeholder="admin@email.com"
+            style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.85rem">
+        </div>
+        <div>
+          <label style="font-size:0.7rem;color:var(--mu);font-weight:700;display:block;margin-bottom:3px">EMAIL 2</label>
+          <input id="cfg-login-email2" type="email" placeholder="backup@email.com"
+            style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.85rem">
+        </div>
+      </div>
+
+      <div style="font-size:0.7rem;font-weight:800;color:var(--mu);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">⚙️ Configuração EmailJS (envio de email)</div>
+      <div style="font-size:0.68rem;color:var(--mu);margin-bottom:8px">Crie conta grátis em <a href="https://www.emailjs.com" target="_blank" style="color:#f97316">emailjs.com</a> e preencha os campos abaixo.</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
+        <div>
+          <label style="font-size:0.7rem;color:var(--mu);font-weight:700;display:block;margin-bottom:2px">SERVICE ID</label>
+          <input id="cfg-emailjs-service" type="text" placeholder="service_xxxxxxx"
+            style="width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.82rem;font-family:monospace">
+        </div>
+        <div>
+          <label style="font-size:0.7rem;color:var(--mu);font-weight:700;display:block;margin-bottom:2px">TEMPLATE ID</label>
+          <input id="cfg-emailjs-template" type="text" placeholder="template_xxxxxxx"
+            style="width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.82rem;font-family:monospace">
+        </div>
+        <div>
+          <label style="font-size:0.7rem;color:var(--mu);font-weight:700;display:block;margin-bottom:2px">PUBLIC KEY</label>
+          <input id="cfg-emailjs-key" type="text" placeholder="xxxxxxxxxxxxxxxxxxxx"
+            style="width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;border:1.5px solid var(--bd);background:var(--c2);color:var(--tx);font-size:0.82rem;font-family:monospace">
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button onclick="cfgSalvarEmailJS()" style="padding:8px 18px;border-radius:8px;border:none;background:var(--b);color:#fff;font-weight:800;font-size:0.8rem;cursor:pointer">💾 Salvar configurações EmailJS</button>
+        <div id="cfg-emailjs-msg" style="font-size:0.75rem;color:var(--mu)"></div>
+      </div>
+    </div>
+    <!-- ══ FIM ACESSO AO SISTEMA ════════════════════════════════ -->
 
     <div>
       <label style="font-size:0.7rem;color:var(--mu);font-weight:700;display:block;margin-bottom:3px">VIAS POR PEDIDO (impressão automática)</label>
@@ -2310,7 +2484,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.255';
+var APP_VERSION = 'v1.6.258';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -10668,6 +10842,313 @@ window.catSalvar = function() {
 
 
 })();
+
+
+/* ═══════════════════════════════════════════════════════════════
+   SISTEMA DE LOGIN — SLJ v1.6.256
+   Credenciais em slj/extras/slj_auth  (Firebase)
+   Email de recuperação via EmailJS → 2 emails admin
+   ═══════════════════════════════════════════════════════════════ */
+
+(function() {
+
+/* ── Defaults ──────────────────────────────────────────────── */
+var SLJ_AUTH_DEFAULT_USER = 'admin';
+var SLJ_AUTH_DEFAULT_PASS = 'laranjinha2025';
+var SLJ_AUTH_EMAILS = ['sergiosartori2011@gmail.com', 'laranjinha.sumare@gmail.com'];
+
+/* EmailJS — preencha com suas credenciais do emailjs.com */
+var EMAILJS_SERVICE_ID  = 'service_50g8j6t';
+var EMAILJS_TEMPLATE_ID = 'template_2q2vvwz';
+var EMAILJS_PUBLIC_KEY  = 'z41nO3B-VEfqdAMYe';
+
+/* ── Utilitários ───────────────────────────────────────────── */
+function _sljHash(str) {
+  /* FNV-1a 32-bit — simples, sem dependência externa */
+  var h = 0x811c9dc5;
+  for (var i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = (h * 0x01000193) >>> 0;
+  }
+  return h.toString(16);
+}
+
+function _sljLoadAuth() {
+  /* Retorna {user, passHash, email1, email2} do Firebase (via slj/extras/slj_auth)
+     ou fallback localStorage ou default */
+  var stored = null;
+  try { stored = JSON.parse(localStorage.getItem('slj_auth_cache') || 'null'); } catch(e){}
+  return stored || {
+    user: SLJ_AUTH_DEFAULT_USER,
+    passHash: _sljHash(SLJ_AUTH_DEFAULT_PASS),
+    email1: SLJ_AUTH_EMAILS[0],
+    email2: SLJ_AUTH_EMAILS[1]
+  };
+}
+
+function _sljSaveAuth(obj) {
+  try { localStorage.setItem('slj_auth_cache', JSON.stringify(obj)); } catch(e){}
+  if (window._fbSyncExtra) window._fbSyncExtra('slj_auth', JSON.stringify(obj));
+}
+
+function _sljGenPass(len) {
+  var chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789!@#';
+  var p = '';
+  for (var i = 0; i < (len||10); i++) p += chars[Math.floor(Math.random()*chars.length)];
+  return p;
+}
+
+/* ── Overlay helpers ───────────────────────────────────────── */
+function _sljShowOverlay() {
+  var el = document.getElementById('slj-login-overlay');
+  if (el) el.style.display = 'flex';
+}
+function _sljHideOverlay() {
+  var el = document.getElementById('slj-login-overlay');
+  if (el) el.style.display = 'none';
+}
+
+/* ── Login ─────────────────────────────────────────────────── */
+window.sljLogin = function() {
+  var userEl = document.getElementById('slj-login-user');
+  var passEl = document.getElementById('slj-login-pass');
+  var errEl  = document.getElementById('slj-login-err');
+  if (!userEl || !passEl) return;
+
+  var u = (userEl.value || '').trim();
+  var p = passEl.value || '';
+
+  if (!u || !p) { errEl.textContent = 'Preencha usuário e senha.'; return; }
+
+  var auth = _sljLoadAuth();
+  if (u === auth.user && _sljHash(p) === auth.passHash) {
+    _sljHideOverlay();
+    errEl.textContent = '';
+    passEl.value = '';
+    /* marcar sessão autenticada */
+    try { sessionStorage.setItem('slj_logged', '1'); } catch(e){}
+    if (typeof SLJ_TOAST === 'function') SLJ_TOAST('Bem-vindo, ' + u + '!', 'g');
+  } else {
+    errEl.textContent = 'Usuário ou senha incorretos.';
+    passEl.value = '';
+    passEl.focus();
+  }
+};
+
+/* ── Esqueci senha ─────────────────────────────────────────── */
+window.sljForgotOpen = function() {
+  var el = document.getElementById('slj-forgot-overlay');
+  if (el) el.classList.add('open');
+  document.getElementById('slj-forgot-msg').textContent = '';
+};
+window.sljForgotClose = function() {
+  var el = document.getElementById('slj-forgot-overlay');
+  if (el) el.classList.remove('open');
+};
+
+window.sljForgotSend = function() {
+  var msgEl = document.getElementById('slj-forgot-msg');
+  msgEl.style.color = '#888';
+  msgEl.textContent = 'Enviando...';
+
+  var auth = _sljLoadAuth();
+  var newPass = _sljGenPass(10);
+  var newHash = _sljHash(newPass);
+
+  /* Inicializa EmailJS — usa config salva ou fallback */
+  var _ejsCfg = (function(){try{return JSON.parse(localStorage.getItem('slj_emailjs_cfg')||'{}');}catch(e){return {};}})();
+  if (_ejsCfg.serviceId)  EMAILJS_SERVICE_ID  = _ejsCfg.serviceId;
+  if (_ejsCfg.templateId) EMAILJS_TEMPLATE_ID = _ejsCfg.templateId;
+  if (_ejsCfg.publicKey)  EMAILJS_PUBLIC_KEY  = _ejsCfg.publicKey;
+  try { emailjs.init(EMAILJS_PUBLIC_KEY); } catch(e){}
+
+  var emails = [auth.email1 || SLJ_AUTH_EMAILS[0], auth.email2 || SLJ_AUTH_EMAILS[1]];
+  var sent = 0;
+  var errs = 0;
+
+  function _onDone() {
+    sent + errs >= emails.length && (function() {
+      if (sent > 0) {
+        /* Salva nova senha */
+        auth.passHash = newHash;
+        _sljSaveAuth(auth);
+        msgEl.style.color = '#16a34a';
+        msgEl.textContent = 'Email enviado! Nova senha temporária salva no sistema.';
+      } else {
+        msgEl.style.color = '#dc2626';
+        msgEl.textContent = 'Falha ao enviar email. Verifique as configurações do EmailJS.';
+      }
+    })();
+  }
+
+  emails.forEach(function(email) {
+    if (!email) { errs++; _onDone(); return; }
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email: email,
+      new_password: newPass,
+      user_name: auth.user,
+      system_name: 'Suco Laranjinha ERP'
+    }).then(function() {
+      sent++; _onDone();
+    }, function(err) {
+      console.error('[SLJ-Login] EmailJS erro para '+email+':', err);
+      errs++; _onDone();
+    });
+  });
+};
+
+/* ── Integração Firebase: sincronizar slj_auth do banco ───── */
+function _sljSyncFromFirebase() {
+  /* Será chamado quando o listener do Firebase disparar */
+  var orig = window._fbExtrasListener;
+  window._fbExtrasListener = function(snapshot) {
+    if (orig) orig(snapshot);
+    try {
+      var val = snapshot && snapshot.val ? snapshot.val() : null;
+      if (val && val.slj_auth) {
+        var parsed = typeof val.slj_auth === 'string'
+          ? JSON.parse(val.slj_auth) : val.slj_auth;
+        if (parsed && parsed.user && parsed.passHash) {
+          localStorage.setItem('slj_auth_cache', JSON.stringify(parsed));
+        }
+      }
+    } catch(e) {}
+  };
+}
+
+/* ── Funções de configuração via tela de Config ──────────────── */
+
+/* Preenche os campos da tela de config quando ela é aberta */
+window.cfgLoginPopulate = function() {
+  var auth = _sljLoadAuth();
+  var ejs = _sljLoadEmailJSConfig();
+  var u = document.getElementById('cfg-login-user-atual');
+  var e1 = document.getElementById('cfg-login-email1');
+  var e2 = document.getElementById('cfg-login-email2');
+  var svc = document.getElementById('cfg-emailjs-service');
+  var tpl = document.getElementById('cfg-emailjs-template');
+  var key = document.getElementById('cfg-emailjs-key');
+  if (u) u.value = auth.user || '';
+  if (e1) e1.value = auth.email1 || SLJ_AUTH_EMAILS[0];
+  if (e2) e2.value = auth.email2 || SLJ_AUTH_EMAILS[1];
+  if (svc) svc.value = ejs.serviceId || '';
+  if (tpl) tpl.value = ejs.templateId || '';
+  if (key) key.value = ejs.publicKey || '';
+};
+
+function _sljLoadEmailJSConfig() {
+  try {
+    return JSON.parse(localStorage.getItem('slj_emailjs_cfg') || '{}');
+  } catch(e) { return {}; }
+}
+function _sljSaveEmailJSConfig(obj) {
+  try { localStorage.setItem('slj_emailjs_cfg', JSON.stringify(obj)); } catch(e){}
+  if (window._fbSyncExtra) window._fbSyncExtra('slj_emailjs_cfg', JSON.stringify(obj));
+}
+
+/* Salvar configurações do EmailJS */
+window.cfgSalvarEmailJS = function() {
+  var svc = (document.getElementById('cfg-emailjs-service')||{}).value||'';
+  var tpl = (document.getElementById('cfg-emailjs-template')||{}).value||'';
+  var key = (document.getElementById('cfg-emailjs-key')||{}).value||'';
+  var msgEl = document.getElementById('cfg-emailjs-msg');
+  if (!svc || !tpl || !key) {
+    if (msgEl) { msgEl.style.color='#dc2626'; msgEl.textContent='Preencha todos os campos.'; }
+    return;
+  }
+  _sljSaveEmailJSConfig({serviceId:svc.trim(), templateId:tpl.trim(), publicKey:key.trim()});
+  /* Atualizar variaveis ao vivo */
+  EMAILJS_SERVICE_ID  = svc.trim();
+  EMAILJS_TEMPLATE_ID = tpl.trim();
+  EMAILJS_PUBLIC_KEY  = key.trim();
+  if (msgEl) { msgEl.style.color='#16a34a'; msgEl.textContent='Salvo!'; setTimeout(function(){msgEl.textContent='';},3000); }
+  if (typeof SLJ_TOAST === 'function') SLJ_TOAST('Configurações EmailJS salvas!', 'g');
+};
+
+/* Alterar usuário/senha de acesso ao sistema */
+window.cfgAlterarLoginSistema = function() {
+  var userAtualEl = document.getElementById('cfg-login-user-atual');
+  var userNovoEl  = document.getElementById('cfg-login-user-novo');
+  var passAtualEl = document.getElementById('cfg-login-pass-atual');
+  var passNovaEl  = document.getElementById('cfg-login-pass-nova');
+  var emailEl1    = document.getElementById('cfg-login-email1');
+  var emailEl2    = document.getElementById('cfg-login-email2');
+  var msgEl       = document.getElementById('cfg-login-msg');
+
+  var userAtual = (userAtualEl||{}).value||'';
+  var userNovo  = ((userNovoEl||{}).value||'').trim();
+  var passAtual = (passAtualEl||{}).value||'';
+  var passNova  = (passNovaEl||{}).value||'';
+  var email1    = ((emailEl1||{}).value||'').trim();
+  var email2    = ((emailEl2||{}).value||'').trim();
+
+  if (!userAtual || !passAtual) {
+    if (msgEl) { msgEl.style.color='#dc2626'; msgEl.textContent='Preencha usuário atual e senha atual.'; }
+    return;
+  }
+
+  var auth = _sljLoadAuth();
+
+  /* Verificar credenciais atuais */
+  if (userAtual !== auth.user || _sljHash(passAtual) !== auth.passHash) {
+    if (msgEl) { msgEl.style.color='#dc2626'; msgEl.textContent='Usuário ou senha atual incorretos.'; }
+    return;
+  }
+
+  /* Atualizar campos */
+  if (userNovo) auth.user = userNovo;
+  if (passNova) auth.passHash = _sljHash(passNova);
+  if (email1) auth.email1 = email1;
+  if (email2) auth.email2 = email2;
+
+  _sljSaveAuth(auth);
+
+  /* Limpar campos de senha */
+  if (passAtualEl) passAtualEl.value = '';
+  if (passNovaEl)  passNovaEl.value = '';
+  if (userNovoEl)  userNovoEl.value = '';
+
+  if (msgEl) { msgEl.style.color='#16a34a'; msgEl.textContent='Acesso atualizado com sucesso!'; setTimeout(function(){msgEl.textContent='';},3000); }
+  if (typeof SLJ_TOAST === 'function') SLJ_TOAST('Acesso ao sistema atualizado!', 'g');
+};
+
+/* ── Inicialização ─────────────────────────────────────────── */
+function _sljInit() {
+  /* Já logado nesta sessão? */
+  var logged = false;
+  try { logged = sessionStorage.getItem('slj_logged') === '1'; } catch(e){}
+  if (logged) { _sljHideOverlay(); return; }
+
+  /* Mostrar overlay */
+  _sljShowOverlay();
+
+  /* Tecla Enter no overlay */
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      /* Não fecha com ESC — login obrigatório */
+    }
+  });
+
+  /* Integração Firebase (tenta pegar credenciais do banco) */
+  _sljSyncFromFirebase();
+
+  /* Focar no usuário */
+  setTimeout(function() {
+    var u = document.getElementById('slj-login-user');
+    if (u) u.focus();
+  }, 200);
+}
+
+/* Aguarda DOM pronto */
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _sljInit);
+} else {
+  _sljInit();
+}
+
+})();
+
+
 </script>
 
 
