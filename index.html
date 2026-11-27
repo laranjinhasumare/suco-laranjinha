@@ -743,168 +743,74 @@ body.light-mode .hname{background:#F8FAFC !important}
 #slj-forgot-msg { font-size:0.8rem;min-height:18px;margin-top:6px;text-align:center; }
 
 /* ══ TELA KIOSK / AUTOATENDIMENTO ══════════════════════════════════════════ */
-#pg-kiosk { display:none; position:fixed; inset:0; z-index:9000; background:#FF6B00;
-            flex-direction:column; overflow:hidden; font-family:'DM Sans',sans-serif; }
-#pg-kiosk.active { display:flex; }
-
-/* Header kiosk */
-#kiosk-header { background:linear-gradient(135deg,#FF6B00,#E85D00);
-                padding:16px 24px; display:flex; align-items:center;
-                justify-content:space-between; gap:12px; flex-shrink:0;
-                box-shadow:0 4px 20px rgba(0,0,0,0.3); }
-#kiosk-header .kh-logo img { height:52px; }
-#kiosk-header .kh-title { font-size:1.5rem; font-weight:900; color:#fff;
-                           letter-spacing:-0.5px; text-shadow:0 2px 8px rgba(0,0,0,0.3); }
-#kiosk-header .kh-senha { background:#fff; color:#FF6B00; border-radius:14px;
-                           padding:8px 18px; text-align:center; min-width:80px; }
-#kiosk-header .kh-senha .ks-label { font-size:0.6rem; font-weight:800;
-                                     text-transform:uppercase; letter-spacing:1px; }
-#kiosk-header .kh-senha .ks-num { font-size:1.6rem; font-weight:900; line-height:1.1; }
-
-/* Categorias kiosk */
-#kiosk-cats { background:rgba(0,0,0,0.15); padding:12px 20px 10px;
-              display:flex; gap:10px; overflow-x:auto; flex-shrink:0;
-              scrollbar-width:none; -ms-overflow-style:none; }
-#kiosk-cats::-webkit-scrollbar { display:none; }
-.kiosk-cat-btn { background:rgba(255,255,255,0.15); color:#fff; border:2px solid rgba(255,255,255,0.3);
-                 border-radius:50px; padding:10px 22px; font-size:0.9rem; font-weight:700;
-                 cursor:pointer; white-space:nowrap; transition:all .2s; flex-shrink:0;
-                 font-family:'DM Sans',sans-serif; }
-.kiosk-cat-btn:hover, .kiosk-cat-btn.active { background:#fff; color:#FF6B00;
-                                               border-color:#fff; transform:scale(1.05); }
-
-/* Grid produtos kiosk */
-#kiosk-produtos-wrap { flex:1; overflow-y:auto; padding:16px 20px;
-                       scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.3) transparent; }
-#kiosk-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
-              gap:14px; }
-.kiosk-prod-card { background:#fff; border-radius:18px; overflow:hidden; cursor:pointer;
-                   transition:all .18s; box-shadow:0 4px 16px rgba(0,0,0,0.2);
-                   display:flex; flex-direction:column; }
-.kiosk-prod-card:hover, .kiosk-prod-card:active { transform:scale(1.04);
-                                                   box-shadow:0 8px 28px rgba(0,0,0,0.35); }
-.kiosk-prod-img { width:100%; height:130px; object-fit:cover; background:#FFF3E0; }
-.kiosk-prod-img-placeholder { width:100%; height:130px; display:flex; align-items:center;
-                               justify-content:center; background:linear-gradient(135deg,#FFF3E0,#FFE0B2);
-                               font-size:3rem; }
-.kiosk-prod-info { padding:10px 12px 12px; }
-.kiosk-prod-nome { font-size:0.85rem; font-weight:800; color:#1a1a1a;
-                   line-height:1.3; margin-bottom:6px; }
-.kiosk-prod-preco { font-size:1.1rem; font-weight:900; color:#FF6B00; }
-
-/* Botão carrinho flutuante */
-#kiosk-cart-fab { position:fixed; bottom:24px; right:24px; z-index:9100;
-                  background:#fff; color:#FF6B00; border:none; border-radius:50px;
-                  padding:14px 24px; font-size:1rem; font-weight:900; cursor:pointer;
-                  box-shadow:0 6px 24px rgba(0,0,0,0.35); transition:all .2s;
-                  display:none; align-items:center; gap:8px; font-family:'DM Sans',sans-serif; }
-#kiosk-cart-fab.visible { display:flex; }
-#kiosk-cart-fab:hover { transform:scale(1.06); }
-#kiosk-cart-fab .fab-badge { background:#FF6B00; color:#fff; border-radius:50%;
-                              width:26px; height:26px; display:flex; align-items:center;
-                              justify-content:center; font-size:0.85rem; font-weight:900; }
-
-/* ── TELA DO CARRINHO KIOSK ── */
-#kiosk-cart-screen { display:none; position:fixed; inset:0; z-index:9200;
-                     background:#f5f5f5; flex-direction:column; overflow:hidden;
-                     font-family:'DM Sans',sans-serif; }
-#kiosk-cart-screen.active { display:flex; }
-#kiosk-cart-header { background:linear-gradient(135deg,#FF6B00,#E85D00);
-                     padding:16px 24px; display:flex; align-items:center;
-                     gap:12px; flex-shrink:0; }
-#kiosk-cart-header h2 { color:#fff; font-size:1.3rem; font-weight:900; flex:1; margin:0; }
-.kch-back { background:rgba(255,255,255,0.2); border:none; color:#fff;
-            border-radius:50%; width:40px; height:40px; cursor:pointer;
-            font-size:1.3rem; display:flex; align-items:center; justify-content:center; }
-
-/* Lista itens carrinho */
-#kiosk-cart-list { flex:1; overflow-y:auto; padding:16px 20px; display:flex;
-                   flex-direction:column; gap:12px; }
-.kiosk-cart-item { background:#fff; border-radius:16px; padding:14px 16px;
-                   display:flex; align-items:center; gap:14px;
-                   box-shadow:0 2px 10px rgba(0,0,0,0.08); }
-.kci-nome { flex:1; font-size:0.95rem; font-weight:700; color:#1a1a1a; }
-.kci-preco { font-size:0.9rem; font-weight:800; color:#FF6B00; min-width:70px; text-align:right; }
-.kci-qty { display:flex; align-items:center; gap:10px; }
-.kci-qty button { background:#FF6B00; color:#fff; border:none; border-radius:50%;
-                  width:34px; height:34px; font-size:1.2rem; font-weight:900;
-                  cursor:pointer; display:flex; align-items:center; justify-content:center;
-                  transition:all .15s; }
-.kci-qty button:hover { transform:scale(1.1); }
-.kci-qty .kci-num { font-size:1rem; font-weight:900; min-width:28px; text-align:center; }
-
-/* Rodapé carrinho */
-#kiosk-cart-footer { background:#fff; padding:16px 20px; border-top:2px solid #eee;
-                     flex-shrink:0; }
-#kiosk-cart-total { font-size:1.6rem; font-weight:900; color:#1a1a1a;
-                    text-align:center; margin-bottom:14px; }
-#kiosk-cart-total span { color:#FF6B00; }
-
-/* Formas de pagamento kiosk */
-.kiosk-pag-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px;
-                  margin-bottom:14px; }
-.kiosk-pag-btn { background:#f8f8f8; border:2.5px solid #ddd; border-radius:14px;
-                 padding:14px 10px; text-align:center; cursor:pointer;
-                 transition:all .2s; font-family:'DM Sans',sans-serif; }
-.kiosk-pag-btn:hover, .kiosk-pag-btn.selected { background:#FFF3E0;
-                                                 border-color:#FF6B00; }
-.kiosk-pag-btn .kpb-icon { font-size:1.6rem; display:block; margin-bottom:4px; }
-.kiosk-pag-btn .kpb-label { font-size:0.8rem; font-weight:800; color:#1a1a1a; }
-.kiosk-pag-btn.selected .kpb-label { color:#FF6B00; }
-.kiosk-pag-btn.stone-btn { background:#0066CC; border-color:#0066CC; }
-.kiosk-pag-btn.stone-btn .kpb-label { color:#fff; }
-.kiosk-pag-btn.stone-btn .kpb-icon { filter:none; }
-
-/* Botão confirmar pedido */
-#kiosk-btn-pagar { width:100%; padding:18px; background:linear-gradient(135deg,#FF6B00,#E85D00);
-                   color:#fff; border:none; border-radius:16px; font-size:1.1rem;
-                   font-weight:900; cursor:pointer; letter-spacing:0.5px;
-                   transition:all .2s; font-family:'DM Sans',sans-serif; }
-#kiosk-btn-pagar:hover { transform:scale(1.02); box-shadow:0 6px 20px rgba(255,107,0,0.4); }
-#kiosk-btn-pagar:disabled { background:#ccc; cursor:not-allowed; transform:none; box-shadow:none; }
-
-/* ── TELA DE CONFIRMAÇÃO DE PEDIDO ── */
-#kiosk-confirm-screen { display:none; position:fixed; inset:0; z-index:9300;
-                        background:linear-gradient(135deg,#FF6B00,#E85D00);
-                        flex-direction:column; align-items:center; justify-content:center;
-                        gap:20px; font-family:'DM Sans',sans-serif; }
-#kiosk-confirm-screen.active { display:flex; }
-.kiosk-confirm-box { background:#fff; border-radius:28px; padding:40px 36px;
-                     text-align:center; max-width:380px; width:90%;
-                     box-shadow:0 20px 60px rgba(0,0,0,0.3); }
-.kiosk-confirm-icon { font-size:4rem; margin-bottom:8px; }
-.kiosk-confirm-senha-num { font-size:5rem; font-weight:900; color:#FF6B00;
-                            line-height:1; margin:12px 0; }
-.kiosk-confirm-label { font-size:0.9rem; font-weight:700; color:#666;
-                       text-transform:uppercase; letter-spacing:1px; }
-.kiosk-confirm-msg { font-size:1rem; color:#444; margin-top:10px; line-height:1.5; }
-.kiosk-confirm-novo { margin-top:24px; padding:16px 32px; background:#FF6B00;
-                      color:#fff; border:none; border-radius:14px; font-size:1rem;
-                      font-weight:800; cursor:pointer; width:100%;
-                      font-family:'DM Sans',sans-serif; }
-
-/* ── SENHA ADMIN KIOSK ── */
-#kiosk-admin-modal { display:none; position:fixed; inset:0; z-index:9999;
-                     background:rgba(0,0,0,0.75); align-items:center; justify-content:center; }
-#kiosk-admin-modal.active { display:flex; }
-.kiosk-admin-box { background:#fff; border-radius:20px; padding:32px 28px;
-                   text-align:center; max-width:320px; width:90%; }
-.kiosk-admin-box h3 { font-size:1.1rem; font-weight:900; margin:0 0 6px; color:#1a1a1a; }
-.kiosk-admin-box p { font-size:0.85rem; color:#666; margin:0 0 18px; }
-.kiosk-admin-box input { width:100%; padding:14px; border:2px solid #ddd;
-                          border-radius:12px; font-size:1.2rem; text-align:center;
-                          letter-spacing:4px; box-sizing:border-box; margin-bottom:14px;
-                          font-family:'DM Sans',sans-serif; }
-.kiosk-admin-btn { width:100%; padding:14px; background:#FF6B00; color:#fff;
-                   border:none; border-radius:12px; font-size:0.95rem; font-weight:800;
-                   cursor:pointer; margin-bottom:10px; font-family:'DM Sans',sans-serif; }
-.kiosk-admin-cancel { background:transparent; color:#666; border:1.5px solid #ddd; }
-
-/* Campo foto no cadastro de produto */
-.prod-foto-preview { width:80px; height:80px; border-radius:12px; object-fit:cover;
-                     border:2px solid var(--bd); display:block; }
-.prod-foto-wrap { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-
+#pg-kiosk{display:none;position:fixed;inset:0;z-index:9000;background:#FF6B00;flex-direction:column;overflow:hidden;font-family:'DM Sans',sans-serif}
+#pg-kiosk.active{display:flex}
+#kiosk-header{background:linear-gradient(135deg,#FF6B00,#E85D00);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;box-shadow:0 4px 20px rgba(0,0,0,0.3)}
+#kiosk-header .kh-logo img{height:52px}
+#kiosk-header .kh-title{font-size:1.5rem;font-weight:900;color:#fff;letter-spacing:-0.5px}
+#kiosk-header .kh-senha{background:#fff;color:#FF6B00;border-radius:14px;padding:8px 18px;text-align:center;min-width:80px}
+.ks-label{font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:1px}
+.ks-num{font-size:1.6rem;font-weight:900;line-height:1.1}
+#kiosk-cats{background:rgba(0,0,0,0.15);padding:12px 20px 10px;display:flex;gap:10px;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
+#kiosk-cats::-webkit-scrollbar{display:none}
+.kiosk-cat-btn{background:rgba(255,255,255,0.15);color:#fff;border:2px solid rgba(255,255,255,0.3);border-radius:50px;padding:10px 22px;font-size:0.9rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0;font-family:'DM Sans',sans-serif}
+.kiosk-cat-btn:hover,.kiosk-cat-btn.active{background:#fff;color:#FF6B00;border-color:#fff;transform:scale(1.05)}
+#kiosk-produtos-wrap{flex:1;overflow-y:auto;padding:16px 20px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.3) transparent}
+#kiosk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+.kiosk-prod-card{background:#fff;border-radius:18px;overflow:hidden;cursor:pointer;transition:all .18s;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:flex;flex-direction:column}
+.kiosk-prod-card:hover,.kiosk-prod-card:active{transform:scale(1.04);box-shadow:0 8px 28px rgba(0,0,0,0.35)}
+.kiosk-prod-img{width:100%;height:130px;object-fit:cover;background:#FFF3E0}
+.kiosk-prod-img-placeholder{width:100%;height:130px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#FFF3E0,#FFE0B2);font-size:3rem}
+.kiosk-prod-info{padding:10px 12px 12px}
+.kiosk-prod-nome{font-size:0.85rem;font-weight:800;color:#1a1a1a;line-height:1.3;margin-bottom:6px}
+.kiosk-prod-preco{font-size:1.1rem;font-weight:900;color:#FF6B00}
+#kiosk-cart-fab{position:fixed;bottom:24px;right:24px;z-index:9100;background:#fff;color:#FF6B00;border:none;border-radius:50px;padding:14px 24px;font-size:1rem;font-weight:900;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,0.35);transition:all .2s;display:none;align-items:center;gap:8px;font-family:'DM Sans',sans-serif}
+#kiosk-cart-fab.visible{display:flex}
+#kiosk-cart-fab:hover{transform:scale(1.06)}
+.fab-badge{background:#FF6B00;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:900}
+#kiosk-cart-screen{display:none;position:fixed;inset:0;z-index:9200;background:#f5f5f5;flex-direction:column;overflow:hidden;font-family:'DM Sans',sans-serif}
+#kiosk-cart-screen.active{display:flex}
+#kiosk-cart-header{background:linear-gradient(135deg,#FF6B00,#E85D00);padding:16px 24px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+#kiosk-cart-header h2{color:#fff;font-size:1.3rem;font-weight:900;flex:1;margin:0}
+.kch-back{background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:50%;width:40px;height:40px;cursor:pointer;font-size:1.3rem;display:flex;align-items:center;justify-content:center}
+#kiosk-cart-list{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px}
+.kiosk-cart-item{background:#fff;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 10px rgba(0,0,0,0.08)}
+.kci-nome{flex:1;font-size:0.95rem;font-weight:700;color:#1a1a1a}
+.kci-preco{font-size:0.9rem;font-weight:800;color:#FF6B00;min-width:70px;text-align:right}
+.kci-qty{display:flex;align-items:center;gap:10px}
+.kci-qty button{background:#FF6B00;color:#fff;border:none;border-radius:50%;width:34px;height:34px;font-size:1.2rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.kci-qty button:hover{transform:scale(1.1)}
+.kci-num{font-size:1rem;font-weight:900;min-width:28px;text-align:center}
+#kiosk-cart-footer{background:#fff;padding:16px 20px;border-top:2px solid #eee;flex-shrink:0}
+#kiosk-cart-total{font-size:1.6rem;font-weight:900;color:#1a1a1a;text-align:center;margin-bottom:14px}
+#kiosk-cart-total span{color:#FF6B00}
+.kiosk-pag-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.kiosk-pag-btn{background:#f8f8f8;border:2.5px solid #ddd;border-radius:14px;padding:14px 10px;text-align:center;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+.kiosk-pag-btn:hover,.kiosk-pag-btn.selected{background:#FFF3E0;border-color:#FF6B00}
+.kpb-icon{font-size:1.6rem;display:block;margin-bottom:4px}
+.kpb-label{font-size:0.8rem;font-weight:800;color:#1a1a1a}
+.kiosk-pag-btn.selected .kpb-label{color:#FF6B00}
+#kiosk-btn-pagar{width:100%;padding:18px;background:linear-gradient(135deg,#FF6B00,#E85D00);color:#fff;border:none;border-radius:16px;font-size:1.1rem;font-weight:900;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+#kiosk-btn-pagar:hover{transform:scale(1.02);box-shadow:0 6px 20px rgba(255,107,0,0.4)}
+#kiosk-btn-pagar:disabled{background:#ccc;cursor:not-allowed;transform:none;box-shadow:none}
+#kiosk-confirm-screen{display:none;position:fixed;inset:0;z-index:9300;background:linear-gradient(135deg,#FF6B00,#E85D00);flex-direction:column;align-items:center;justify-content:center;gap:20px;font-family:'DM Sans',sans-serif}
+#kiosk-confirm-screen.active{display:flex}
+.kiosk-confirm-box{background:#fff;border-radius:28px;padding:40px 36px;text-align:center;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.kiosk-confirm-icon{font-size:4rem;margin-bottom:8px}
+.kiosk-confirm-senha-num{font-size:5rem;font-weight:900;color:#FF6B00;line-height:1;margin:12px 0}
+.kiosk-confirm-label{font-size:0.9rem;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:1px}
+.kiosk-confirm-msg{font-size:1rem;color:#444;margin-top:10px;line-height:1.5}
+.kiosk-confirm-novo{margin-top:24px;padding:16px 32px;background:#FF6B00;color:#fff;border:none;border-radius:14px;font-size:1rem;font-weight:800;cursor:pointer;width:100%;font-family:'DM Sans',sans-serif}
+#kiosk-admin-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center}
+#kiosk-admin-modal.active{display:flex}
+.kiosk-admin-box{background:#fff;border-radius:20px;padding:32px 28px;text-align:center;max-width:320px;width:90%}
+.kiosk-admin-box h3{font-size:1.1rem;font-weight:900;margin:0 0 6px;color:#1a1a1a}
+.kiosk-admin-box p{font-size:0.85rem;color:#666;margin:0 0 18px}
+.kiosk-admin-box input{width:100%;padding:14px;border:2px solid #ddd;border-radius:12px;font-size:1.2rem;text-align:center;letter-spacing:4px;box-sizing:border-box;margin-bottom:14px;font-family:'DM Sans',sans-serif}
+.kiosk-admin-btn{width:100%;padding:14px;background:#FF6B00;color:#fff;border:none;border-radius:12px;font-size:0.95rem;font-weight:800;cursor:pointer;margin-bottom:10px;font-family:'DM Sans',sans-serif}
+.kiosk-admin-cancel{background:transparent;color:#666;border:1.5px solid #ddd}
+.prod-foto-preview{width:80px;height:80px;border-radius:12px;object-fit:cover;border:2px solid var(--bd);display:block}
+.prod-foto-wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
@@ -7726,7 +7632,7 @@ window.prodFiltrar = function prodFiltrar(v){
   });
 }
 
-window.prodAbrirEdicao = function prodAbrirEdicao(cod){
+function prodAbrirEdicao(cod){
   var p=PDV_IDX[String(cod)];if(!p)return;
   catPopularSelect('edit-prod-cat', p.cat);
   document.getElementById('edit-prod-cod-orig').value=p.cod;
@@ -8861,89 +8767,7 @@ window.estqGerarListaComprasPDF = function() {
     +'<th>Observação</th>'
     +'</tr></thead><tbody>'+rows+'</tbody></table><br>'
     +'<button class="no-print" onclick="window.print()" style="padding:10px 24px;background:#ea580c;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">🖨️ Imprimir / Salvar PDF</button>'
-    +'
-<!-- ══ TELA KIOSK / AUTOATENDIMENTO ════════════════════════════════════════ -->
-<div id="pg-kiosk">
-  <!-- Header -->
-  <div id="kiosk-header">
-    <div class="kh-logo"><img id="kiosk-logo-img" src="" alt="Suco Laranjinha"></div>
-    <div class="kh-title">🍊 Faça seu Pedido!</div>
-    <div class="kh-senha">
-      <div class="ks-label">Última senha</div>
-      <div class="ks-num" id="kiosk-ultima-senha">—</div>
-    </div>
-    <button onclick="kioskAdminOpen()" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.4);font-size:0.6rem;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:700">⚙</button>
-  </div>
-  <!-- Categorias -->
-  <div id="kiosk-cats"></div>
-  <!-- Grid produtos -->
-  <div id="kiosk-produtos-wrap">
-    <div id="kiosk-grid"></div>
-  </div>
-  <!-- FAB Carrinho -->
-  <button id="kiosk-cart-fab" onclick="kioskCartOpen()">
-    <span>🛒 Ver Carrinho</span>
-    <span class="fab-badge" id="kiosk-cart-count">0</span>
-    <span style="margin-left:4px;color:#FF6B00;font-weight:900" id="kiosk-cart-total-fab">R$ 0,00</span>
-  </button>
-</div>
-
-<!-- ══ TELA CARRINHO KIOSK ══════════════════════════════════════════════════ -->
-<div id="kiosk-cart-screen">
-  <div id="kiosk-cart-header">
-    <button class="kch-back" onclick="kioskCartClose()">←</button>
-    <h2>🛒 Meu Pedido</h2>
-    <button onclick="kioskCartClear()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:8px;padding:8px 14px;font-size:0.8rem;font-weight:700;cursor:pointer">🗑 Limpar</button>
-  </div>
-  <div id="kiosk-cart-list"></div>
-  <div id="kiosk-cart-footer">
-    <div id="kiosk-cart-total">Total: <span id="kiosk-total-val">R$ 0,00</span></div>
-    <!-- Formas de pagamento -->
-    <div class="kiosk-pag-grid">
-      <div class="kiosk-pag-btn" onclick="kioskSelPag(this,'Dinheiro')">
-        <span class="kpb-icon">💵</span><span class="kpb-label">Dinheiro</span>
-      </div>
-      <div class="kiosk-pag-btn" onclick="kioskSelPag(this,'Pix')">
-        <span class="kpb-icon">📲</span><span class="kpb-label">Pix</span>
-      </div>
-      <div class="kiosk-pag-btn" onclick="kioskSelPag(this,'Crédito')">
-        <span class="kpb-icon">💳</span><span class="kpb-label">Crédito (Stone)</span>
-      </div>
-      <div class="kiosk-pag-btn" onclick="kioskSelPag(this,'Débito')">
-        <span class="kpb-icon">🏧</span><span class="kpb-label">Débito (Stone)</span>
-      </div>
-    </div>
-    <button id="kiosk-btn-pagar" onclick="kioskConfirmarPedido()" disabled>
-      ✅ Confirmar Pedido
-    </button>
-  </div>
-</div>
-
-<!-- ══ TELA CONFIRMAÇÃO ══════════════════════════════════════════════════════ -->
-<div id="kiosk-confirm-screen">
-  <div class="kiosk-confirm-box">
-    <div class="kiosk-confirm-icon">✅</div>
-    <div class="kiosk-confirm-label">Sua senha é</div>
-    <div class="kiosk-confirm-senha-num" id="kiosk-confirm-num">—</div>
-    <div class="kiosk-confirm-label">Aguarde ser chamado!</div>
-    <div class="kiosk-confirm-msg" id="kiosk-confirm-msg"></div>
-    <button class="kiosk-confirm-novo" onclick="kioskNovoPedido()">🍊 Novo Pedido</button>
-  </div>
-</div>
-
-<!-- ══ MODAL SENHA ADMIN KIOSK ══════════════════════════════════════════════ -->
-<div id="kiosk-admin-modal">
-  <div class="kiosk-admin-box">
-    <h3>🔐 Acesso Restrito</h3>
-    <p>Digite a senha para sair do autoatendimento</p>
-    <input type="password" id="kiosk-admin-senha" placeholder="••••" maxlength="20"
-           onkeydown="if(event.key==='Enter')kioskAdminConfirm()">
-    <button class="kiosk-admin-btn" onclick="kioskAdminConfirm()">Confirmar</button>
-    <button class="kiosk-admin-btn kiosk-admin-cancel" onclick="kioskAdminCancel()">Cancelar</button>
-  </div>
-</div>
-
-</body></html>';
+    +'</body></html>';
   // Adicionar filtro no topo do PDF
   var filtroHtml = '<div class="no-print" style="margin-bottom:16px;display:flex;gap:10px;align-items:center">'
     +'<span style="font-size:13px;font-weight:700;color:#555">Exibir:</span>'
@@ -14903,452 +14727,259 @@ window.showPg = function(id, btn) {
   }
 };
 
-})();
-
-
-// ════════════════════════════════════════════════════════════════════════════
-// KIOSK — AUTOATENDIMENTO
-// ════════════════════════════════════════════════════════════════════════════
-(function() {
-  var KIOSK = {
-    cart: [],       // [{prod, qty}]
-    pagSel: '',     // forma de pagamento selecionada
-    catSel: 'Todos'
-  };
-  window._KIOSK = KIOSK;
-
-  // ── ABRIR/FECHAR KIOSK ──────────────────────────────────────────────────
-  window.kioskOpen = function() {
-    document.getElementById('pg-kiosk').classList.add('active');
-    // Copia logo do sistema
-    var sbjLogo = document.querySelector('.sb-logo img');
-    var kioskLogo = document.getElementById('kiosk-logo-img');
-    if (sbjLogo && kioskLogo) kioskLogo.src = sbjLogo.src;
-    kioskRenderCats();
-    kioskRenderGrid();
-    kioskRenderSenha();
-    // Bloquear botão voltar do browser enquanto kiosk estiver aberto
-    history.pushState({kiosk:true}, '');
-    window.addEventListener('popstate', kioskBackHandler);
-  };
-
-  function kioskBackHandler(e) {
-    if (document.getElementById('pg-kiosk').classList.contains('active') ||
-        document.getElementById('kiosk-cart-screen').classList.contains('active')) {
-      history.pushState({kiosk:true}, '');
-      kioskAdminOpen();
-    }
-  }
-
-  window.kioskClose = function() {
-    document.getElementById('pg-kiosk').classList.remove('active');
-    document.getElementById('kiosk-cart-screen').classList.remove('active');
-    document.getElementById('kiosk-confirm-screen').classList.remove('active');
-    window.removeEventListener('popstate', kioskBackHandler);
-    // Atualiza lista de pedidos/senhas na tela do PDV
-    if (typeof pdvRenderSenha === 'function') pdvRenderSenha();
-  };
-
-  // ── SENHA DISPLAY ─────────────────────────────────────────────────────
-  function kioskRenderSenha() {
-    var ultima = localStorage.getItem('slj_senha_ultima');
-    var el = document.getElementById('kiosk-ultima-senha');
-    if (el) el.textContent = ultima || '—';
-  }
-
-  // ── CATEGORIAS ────────────────────────────────────────────────────────
-  function kioskRenderCats() {
-    var cats = ['Todos'].concat((window.PDV_CATS || []).filter(function(c){return c!=='Todos';}));
-    var wrap = document.getElementById('kiosk-cats');
-    if (!wrap) return;
-    wrap.innerHTML = cats.map(function(c) {
-      return '<button class="kiosk-cat-btn' + (c === KIOSK.catSel ? ' active' : '') +
-             '" onclick="kioskSelCat(\'' + c + '\')">' + c + '</button>';
-    }).join('');
-  }
-
-  window.kioskSelCat = function(cat) {
-    KIOSK.catSel = cat;
-    kioskRenderCats();
-    kioskRenderGrid();
-  };
-
-  // ── GRID DE PRODUTOS ─────────────────────────────────────────────────
-  function kioskRenderGrid() {
-    var grid = document.getElementById('kiosk-grid');
-    if (!grid) return;
-    var prods = (window.PDV_CATALOGO || []).filter(function(p) {
-      return p.ativo !== false && (KIOSK.catSel === 'Todos' || p.cat === KIOSK.catSel);
-    });
-    if (prods.length === 0) {
-      grid.innerHTML = '<div style="color:rgba(255,255,255,0.7);text-align:center;padding:40px;grid-column:1/-1;font-size:1.1rem">Nenhum produto disponível</div>';
-      return;
-    }
-    grid.innerHTML = prods.map(function(p) {
-      var imgHtml = p.foto_url
-        ? '<img class="kiosk-prod-img" src="' + p.foto_url + '" alt="' + p.nome + '" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">' +
-          '<div class="kiosk-prod-img-placeholder" style="display:none">🍊</div>'
-        : '<div class="kiosk-prod-img-placeholder">🍊</div>';
-      return '<div class="kiosk-prod-card" onclick="kioskAddCart(' + p.cod + ')">' +
-        imgHtml +
-        '<div class="kiosk-prod-info">' +
-          '<div class="kiosk-prod-nome">' + p.nome + '</div>' +
-          '<div class="kiosk-prod-preco">R$ ' + p.preco.toFixed(2).replace('.',',') + '</div>' +
-        '</div></div>';
-    }).join('');
-  }
-
-  // ── CARRINHO ─────────────────────────────────────────────────────────
-  window.kioskAddCart = function(cod) {
-    var prod = (window.PDV_IDX || {})[String(cod)];
-    if (!prod) return;
-    var item = KIOSK.cart.find(function(i){return i.prod.cod === cod;});
-    if (item) { item.qty++; }
-    else { KIOSK.cart.push({prod: prod, qty: 1}); }
-    kioskUpdateFab();
-    // Feedback visual
-    if (typeof SLJ_TOAST === 'function') SLJ_TOAST('✅ ' + prod.nome + ' adicionado!', 'g');
-  };
-
-  function kioskUpdateFab() {
-    var total = KIOSK.cart.reduce(function(s,i){return s + i.prod.preco * i.qty;}, 0);
-    var count = KIOSK.cart.reduce(function(s,i){return s + i.qty;}, 0);
-    var fab = document.getElementById('kiosk-cart-fab');
-    var badge = document.getElementById('kiosk-cart-count');
-    var totalEl = document.getElementById('kiosk-cart-total-fab');
-    if (fab) fab.classList.toggle('visible', count > 0);
-    if (badge) badge.textContent = count;
-    if (totalEl) totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.',',');
-  }
-
-  window.kioskCartOpen = function() {
-    document.getElementById('kiosk-cart-screen').classList.add('active');
-    kioskRenderCart();
-  };
-
-  window.kioskCartClose = function() {
-    document.getElementById('kiosk-cart-screen').classList.remove('active');
-  };
-
-  window.kioskCartClear = function() {
-    KIOSK.cart = [];
-    KIOSK.pagSel = '';
-    kioskUpdateFab();
-    kioskRenderCart();
-    kioskCartClose();
-  };
-
-  function kioskRenderCart() {
-    var list = document.getElementById('kiosk-cart-list');
-    var totalEl = document.getElementById('kiosk-total-val');
-    var btnPagar = document.getElementById('kiosk-btn-pagar');
-    if (!list) return;
-    if (KIOSK.cart.length === 0) {
-      list.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#999;font-size:1rem">Carrinho vazio<br><span style="font-size:2rem">🛒</span></div>';
-      if (totalEl) totalEl.textContent = 'R$ 0,00';
-      if (btnPagar) btnPagar.disabled = true;
-      return;
-    }
-    var total = 0;
-    list.innerHTML = KIOSK.cart.map(function(item, idx) {
-      var sub = item.prod.preco * item.qty;
-      total += sub;
-      return '<div class="kiosk-cart-item">' +
-        '<div class="kci-nome">' + item.prod.nome + '</div>' +
-        '<div class="kci-qty">' +
-          '<button onclick="kioskQtyChange(' + idx + ',-1)">−</button>' +
-          '<span class="kci-num">' + item.qty + '</span>' +
-          '<button onclick="kioskQtyChange(' + idx + ',1)">+</button>' +
-        '</div>' +
-        '<div class="kci-preco">R$ ' + sub.toFixed(2).replace('.',',') + '</div>' +
-      '</div>';
-    }).join('');
-    if (totalEl) totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.',',');
-    if (btnPagar) btnPagar.disabled = !KIOSK.pagSel;
-  }
-
-  window.kioskQtyChange = function(idx, delta) {
-    if (!KIOSK.cart[idx]) return;
-    KIOSK.cart[idx].qty += delta;
-    if (KIOSK.cart[idx].qty <= 0) KIOSK.cart.splice(idx, 1);
-    kioskUpdateFab();
-    kioskRenderCart();
-  };
-
-  // ── FORMA DE PAGAMENTO ───────────────────────────────────────────────
-  window.kioskSelPag = function(el, forma) {
-    document.querySelectorAll('.kiosk-pag-btn').forEach(function(b){b.classList.remove('selected');});
-    el.classList.add('selected');
-    KIOSK.pagSel = forma;
-    var btnPagar = document.getElementById('kiosk-btn-pagar');
-    if (btnPagar) btnPagar.disabled = KIOSK.cart.length === 0;
-    // Se Stone (crédito/débito), abre deep link Stone
-    if (forma === 'Crédito' || forma === 'Débito') {
-      var total = KIOSK.cart.reduce(function(s,i){return s + i.prod.preco * i.qty;}, 0);
-      var centavos = Math.round(total * 100);
-      var tipoStone = forma === 'Crédito' ? 'credit' : 'debit';
-      // Deep link Stone Payments — abre o app Stone com valor pré-preenchido
-      var stoneUrl = 'stone://payment?amount=' + centavos + '&type=' + tipoStone;
-      try { window.location.href = stoneUrl; } catch(e) {}
-      if (typeof SLJ_TOAST === 'function') SLJ_TOAST('💳 Abrindo maquininha Stone...', 'g');
-    }
-  };
-
-  // ── CONFIRMAR PEDIDO ─────────────────────────────────────────────────
-  window.kioskConfirmarPedido = function() {
-    if (KIOSK.cart.length === 0) return;
-    if (!KIOSK.pagSel) { if (typeof SLJ_TOAST==='function') SLJ_TOAST('Selecione a forma de pagamento!','r'); return; }
-
-    // Gerar número de senha (mesma sequência do PDV)
-    var num = parseInt(localStorage.getItem('slj_senha_num') || '1', 10);
-    localStorage.setItem('slj_senha_num', String(num + 1));
-    localStorage.setItem('slj_senha_ultima', String(num));
-    if (window._fbSyncExtra) {
-      window._fbSyncExtra('slj_senha_num', String(num + 1));
-      window._fbSyncExtra('slj_senha_ultima', String(num));
-    }
-
-    // Montar itens
-    var total = KIOSK.cart.reduce(function(s,i){return s + i.prod.preco * i.qty;}, 0);
-    var itens = KIOSK.cart.map(function(i){ return {cod:i.prod.cod,nome:i.prod.nome,preco:i.prod.preco,qty:i.qty}; });
-
-    // Salvar pedido no historico do PDV (como PDVA)
-    var hora = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    var pedidoEntry = {
-      mesa: 'Senha ' + num,
-      mesaId: 'kiosk_' + num,
-      itens: itens.map(function(it){return {cod:it.cod,nome:it.nome,preco:it.preco,qty:it.qty,total:it.preco*it.qty};}),
-      total: total,
-      forma: KIOSK.pagSel,
-      hora: hora,
-      ts: Date.now(),
-      origem: 'PDVA',
-      senha: num
-    };
-    if (window.PDV && window.PDV.historico) {
-      window.PDV.historico.unshift(pedidoEntry);
-      if (typeof pdvSalvar === 'function') pdvSalvar();
-      if (typeof pdvRenderContas === 'function') pdvRenderContas();
-    }
-
-    // Enviar pra cozinha (KDS)
-    var kdsKey = 'slj_kds';
-    try {
-      var kds = JSON.parse(localStorage.getItem(kdsKey) || '[]');
-      kds.unshift({
-        id: 'kiosk_' + num + '_' + Date.now(),
-        mesa: 'PDVA - Senha ' + num,
-        itens: itens,
-        hora: hora,
-        ts: Date.now(),
-        status: 'pendente'
-      });
-      localStorage.setItem(kdsKey, JSON.stringify(kds));
-      if (window._fbSyncExtra) window._fbSyncExtra('slj_kds', JSON.stringify(kds));
-    } catch(e) {}
-
-    // Imprimir senha (via window.print com CSS @media print)
-    kioskImprimirSenha(num, itens, total, KIOSK.pagSel);
-
-    // Mostrar tela de confirmação
-    document.getElementById('kiosk-cart-screen').classList.remove('active');
-    document.getElementById('kiosk-confirm-screen').classList.add('active');
-    document.getElementById('kiosk-confirm-num').textContent = num;
-    var forma = KIOSK.pagSel;
-    document.getElementById('kiosk-confirm-msg').innerHTML =
-      '<b>Forma de pagamento:</b> ' + forma + '<br>' +
-      '<b>Total:</b> R$ ' + total.toFixed(2).replace('.',',') + '<br><br>' +
-      (forma==='Dinheiro' ? '💵 Pague no balcão ao ser chamado.' :
-       forma==='Pix' ? '📲 Escaneie o QR Code no balcão.' :
-       '💳 Pagamento processado na maquininha.');
-
-    // Atualiza display de senha no kiosk header
-    var el = document.getElementById('kiosk-ultima-senha');
-    if (el) el.textContent = num;
-    // Atualiza no PDV principal também
-    if (typeof pdvRenderSenha === 'function') pdvRenderSenha();
-  };
-
-  // ── IMPRESSÃO DA SENHA ───────────────────────────────────────────────
-  function kioskImprimirSenha(num, itens, total, forma) {
-    var conteudo = '<!DOCTYPE html><html><head><meta charset="utf-8">' +
-      '<style>body{font-family:monospace;font-size:14px;width:58mm;margin:0;padding:4px}' +
-      'h1{font-size:22px;text-align:center;margin:4px 0}' +
-      '.senha{font-size:48px;font-weight:900;text-align:center;margin:8px 0;border:3px solid #000;padding:4px}' +
-      'hr{border-top:1px dashed #000;margin:6px 0}' +
-      '.item{display:flex;justify-content:space-between;font-size:12px;margin:2px 0}' +
-      '.total{font-size:16px;font-weight:900;text-align:right;margin-top:6px}' +
-      '.rodape{text-align:center;font-size:11px;margin-top:8px}</style></head><body>' +
-      '<h1>🍊 Suco Laranjinha</h1>' +
-      '<hr><div style="text-align:center;font-size:11px;font-weight:700">SUA SENHA</div>' +
-      '<div class="senha">' + num + '</div>' +
-      '<hr>' +
-      itens.map(function(i){
-        return '<div class="item"><span>' + i.qty + 'x ' + i.nome + '</span>' +
-               '<span>R$' + (i.preco*i.qty).toFixed(2).replace('.',',') + '</span></div>';
-      }).join('') +
-      '<hr><div class="total">TOTAL: R$ ' + total.toFixed(2).replace('.',',') + '</div>' +
-      '<div class="item"><span>Pagamento:</span><span>' + forma + '</span></div>' +
-      '<hr><div class="rodape">Aguarde ser chamado!<br>' + new Date().toLocaleTimeString('pt-BR') + '</div>' +
-      '</body></html>';
-    var w = window.open('','_blank','width=300,height=400');
-    if (w) { w.document.write(conteudo); w.document.close(); w.focus(); w.print(); w.close(); }
-  }
-
-  // ── NOVO PEDIDO ──────────────────────────────────────────────────────
-  window.kioskNovoPedido = function() {
-    KIOSK.cart = [];
-    KIOSK.pagSel = '';
-    document.getElementById('kiosk-confirm-screen').classList.remove('active');
-    kioskUpdateFab();
-    kioskRenderCats();
-    kioskRenderGrid();
-    // Volta pro topo
-    var wrap = document.getElementById('kiosk-produtos-wrap');
-    if (wrap) wrap.scrollTop = 0;
-  };
-
-  // ── ADMIN (sair do kiosk) ────────────────────────────────────────────
-  window.kioskAdminOpen = function() {
-    var modal = document.getElementById('kiosk-admin-modal');
-    if (modal) { modal.classList.add('active'); }
-    var inp = document.getElementById('kiosk-admin-senha');
-    if (inp) { inp.value = ''; inp.focus(); }
-  };
-
-  window.kioskAdminCancel = function() {
-    document.getElementById('kiosk-admin-modal').classList.remove('active');
-  };
-
-  window.kioskAdminConfirm = function() {
-    var inp = document.getElementById('kiosk-admin-senha');
-    var senha = (inp || {}).value || '';
-    // Verifica contra a senha de login do sistema
-    var auth = null;
-    try { auth = JSON.parse(localStorage.getItem('slj_auth_cache') || 'null'); } catch(e){}
-    // Também aceita senha financeiro
-    var senhaFin = localStorage.getItem('slj_senha_financeiro') || '1234';
-    var hashDigitado = '';
-    // FNV-1a inline para verificar
-    var fnv = function(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=(h*16777619)>>>0;}return h.toString(16);};
-    hashDigitado = fnv(senha);
-    var ok = (senha === senhaFin) ||
-             (auth && auth.passHash && auth.passHash === hashDigitado);
-    if (ok) {
-      document.getElementById('kiosk-admin-modal').classList.remove('active');
-      kioskClose();
-    } else {
-      var inp2 = document.getElementById('kiosk-admin-senha');
-      if (inp2) { inp2.value=''; inp2.style.border='2px solid #ef4444'; inp2.focus();
-                  setTimeout(function(){inp2.style.border='2px solid #ddd';},1200); }
-      if (typeof SLJ_TOAST==='function') SLJ_TOAST('Senha incorreta!','r');
-    }
-  };
-
-  // ── FOTO PRODUTO (upload → Firebase Storage) ─────────────────────────
-  window.prodFotoPreview = function(prefix) {
-    var input = document.getElementById(prefix + '-prod-foto-input');
-    var preview = document.getElementById(prefix + '-prod-foto-preview');
-    var placeholder = document.getElementById(prefix + '-prod-foto-placeholder');
-    var limpar = document.getElementById(prefix + '-prod-foto-limpar');
-    var urlHidden = document.getElementById(prefix + '-prod-foto-url');
-    if (!input || !input.files || !input.files[0]) return;
-    var file = input.files[0];
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      if (preview) { preview.src = e.target.result; preview.style.display = 'block'; }
-      if (placeholder) placeholder.style.display = 'none';
-      if (limpar) limpar.style.display = '';
-      // Upload para Firebase Storage
-      kioskUploadFoto(file, function(url) {
-        if (urlHidden) urlHidden.value = url;
-        if (preview) preview.src = url;
-        if (typeof SLJ_TOAST === 'function') SLJ_TOAST('📸 Foto enviada!', 'g');
-      });
-    };
-    reader.readAsDataURL(file);
-  };
-
-  window.prodFotoLimpar = function(prefix) {
-    var preview = document.getElementById(prefix + '-prod-foto-preview');
-    var placeholder = document.getElementById(prefix + '-prod-foto-placeholder');
-    var limpar = document.getElementById(prefix + '-prod-foto-limpar');
-    var urlHidden = document.getElementById(prefix + '-prod-foto-url');
-    var input = document.getElementById(prefix + '-prod-foto-input');
-    if (preview) { preview.src = ''; preview.style.display = 'none'; }
-    if (placeholder) placeholder.style.display = '';
-    if (limpar) limpar.style.display = 'none';
-    if (urlHidden) urlHidden.value = '';
-    if (input) input.value = '';
-  };
-
-  function kioskUploadFoto(file, cb) {
-    // Upload para Firebase Storage via REST API
-    var projectId = 'suco-laranjinha'; // ajustar se necessário
-    var fileName = 'produtos/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-    // Tenta via Firebase Storage SDK se disponível
-    if (window.firebase && firebase.storage) {
-      try {
-        var ref = firebase.storage().ref(fileName);
-        ref.put(file).then(function(snap){
-          snap.ref.getDownloadURL().then(function(url){ cb(url); });
-        }).catch(function(e){ console.warn('Storage error:', e); cb(''); });
-        return;
-      } catch(e) {}
-    }
-    // Fallback: converte para base64 e salva como data URL (funciona sem Storage)
-    var reader = new FileReader();
-    reader.onload = function(e) { cb(e.target.result); };
-    reader.readAsDataURL(file);
-    if (typeof SLJ_TOAST === 'function') SLJ_TOAST('⚠️ Foto salva localmente (configure Firebase Storage para nuvem)', 'o');
-  }
-
-  // ── INTEGRAR FOTO NO SAVE DE PRODUTO ────────────────────────────────
-  // Hook no prodSalvarNovo para incluir foto_url
-  var _origProdSalvarNovo = window.prodSalvarNovo;
-  window.prodSalvarNovo = function() {
-    _origProdSalvarNovo();
-    // Depois que salvou, adiciona foto ao último produto
-    var url = (document.getElementById('novo-prod-foto-url') || {}).value || '';
-    if (url && window.PDV_CATALOGO && window.PDV_CATALOGO.length > 0) {
-      window.PDV_CATALOGO[window.PDV_CATALOGO.length - 1].foto_url = url;
-      if (typeof prodSalvarEdicoes === 'function') prodSalvarEdicoes();
-    }
-    prodFotoLimpar('novo');
-  };
-
-  var _origProdSalvarIndividual = window.prodSalvarIndividual;
-  window.prodSalvarIndividual = function() {
-    var url = (document.getElementById('edit-prod-foto-url') || {}).value || '';
-    _origProdSalvarIndividual();
-    if (url) {
-      var cod = (document.getElementById('edit-prod-cod-orig') || {}).value;
-      var prod = window.PDV_IDX && window.PDV_IDX[String(cod)];
-      if (prod) { prod.foto_url = url; if (typeof prodSalvarEdicoes==='function') prodSalvarEdicoes(); }
-    }
-    prodFotoLimpar('edit');
-  };
-
-  // Preencher foto no form de edição (hook em prodAbrirEdicao)
-  var _origProdAbrirEdicao = window.prodAbrirEdicao;
-  window.prodAbrirEdicao = function(cod) {
-    if (_origProdAbrirEdicao) _origProdAbrirEdicao(cod);
-    var prod = window.PDV_IDX && window.PDV_IDX[String(cod)];
-    if (prod && prod.foto_url) {
-      var preview = document.getElementById('edit-prod-foto-preview');
-      var placeholder = document.getElementById('edit-prod-foto-placeholder');
-      var limpar = document.getElementById('edit-prod-foto-limpar');
-      var urlHidden = document.getElementById('edit-prod-foto-url');
-      if (preview) { preview.src = prod.foto_url; preview.style.display='block'; }
-      if (placeholder) placeholder.style.display='none';
-      if (limpar) limpar.style.display='';
-      if (urlHidden) urlHidden.value = prod.foto_url;
-    } else {
-      prodFotoLimpar('edit');
-    }
-  };
 
 })();
-// ════════════════════════════════════════════════════════════════════════════
+</script>
+<script>
+// ══ KIOSK / AUTOATENDIMENTO ══════════════════════════════════════════════
+var KIOSK = { carrinho: [], catSel: 'todos', pagSel: null };
+
+function kioskOpen() {
+  document.getElementById('pg-kiosk').classList.add('active');
+  if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function(){});
+  kioskRenderCats(); kioskRenderProdutos(); kioskAtualizarSenha();
+}
+function kioskClose() {
+  document.getElementById('pg-kiosk').classList.remove('active');
+  document.getElementById('kiosk-cart-screen').classList.remove('active');
+  document.getElementById('kiosk-confirm-screen').classList.remove('active');
+  document.getElementById('kiosk-admin-modal').classList.remove('active');
+  if (document.exitFullscreen) document.exitFullscreen().catch(function(){});
+}
+function kioskAtualizarSenha() {
+  var ultima = localStorage.getItem('slj_senha_ultima') || '—';
+  var el = document.getElementById('kiosk-ultima-senha');
+  if (el) el.textContent = ultima;
+}
+function kioskRenderCats() {
+  var cats = ['todos'];
+  if (window.PDV_CATS && PDV_CATS.length) PDV_CATS.forEach(function(c){ cats.push(c); });
+  var html = '';
+  cats.forEach(function(c) {
+    var label = c === 'todos' ? '🍊 Todos' : c;
+    html += '<button class="kiosk-cat-btn' + (KIOSK.catSel===c?' active':'') + '" data-cat="' + c.replace(/"/g,'&quot;') + '" onclick="kioskSelCat(this, this.dataset.cat)">' + label + '</button>';
+  });
+  document.getElementById('kiosk-cats').innerHTML = html;
+}
+function kioskSelCat(btn, cat) {
+  KIOSK.catSel = cat;
+  document.querySelectorAll('.kiosk-cat-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active'); kioskRenderProdutos();
+}
+function kioskRenderProdutos() {
+  var prods = window.PDV_CATALOGO || [];
+  var filtrados = KIOSK.catSel === 'todos' ? prods : prods.filter(function(p){ return p.categoria === KIOSK.catSel; });
+  var html = '';
+  filtrados.forEach(function(p) {
+    if (p.ativo === false) return;
+    var idx = prods.indexOf(p);
+    var imgHtml = p.foto
+      ? '<img class="kiosk-prod-img" src="'+p.foto+'" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="kiosk-prod-img-placeholder" style="display:none">🍊</div>'
+      : '<div class="kiosk-prod-img-placeholder">🍊</div>';
+    var preco = parseFloat(p.preco)||0;
+    html += '<div class="kiosk-prod-card" onclick="kioskAddCarrinho('+idx+')">' + imgHtml +
+      '<div class="kiosk-prod-info"><div class="kiosk-prod-nome">'+(p.nome||'Produto')+'</div>' +
+      '<div class="kiosk-prod-preco">R$ '+preco.toFixed(2).replace('.',',')+'</div></div></div>';
+  });
+  if (!html) html = '<div style="color:#fff;text-align:center;padding:40px;font-size:1rem;opacity:0.7;grid-column:1/-1">Nenhum produto nesta categoria</div>';
+  document.getElementById('kiosk-grid').innerHTML = html;
+}
+function kioskAddCarrinho(idx) {
+  var p = (window.PDV_CATALOGO||[])[idx]; if (!p) return;
+  var existente = KIOSK.carrinho.find(function(item){ return item.idx===idx; });
+  if (existente) { existente.qty++; } else { KIOSK.carrinho.push({idx:idx,nome:p.nome,preco:parseFloat(p.preco)||0,qty:1}); }
+  kioskAtualizarFab();
+  var info = document.createElement('div');
+  info.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#fff;color:#FF6B00;padding:12px 24px;border-radius:50px;font-weight:900;font-size:0.95rem;z-index:9150;box-shadow:0 4px 20px rgba(0,0,0,0.25);pointer-events:none;font-family:DM Sans,sans-serif';
+  info.textContent = '✅ '+p.nome+' adicionado!';
+  document.body.appendChild(info);
+  setTimeout(function(){ if(info.parentNode) info.parentNode.removeChild(info); }, 1500);
+}
+function kioskAtualizarFab() {
+  var total=0,qtd=0;
+  KIOSK.carrinho.forEach(function(item){ total+=item.preco*item.qty; qtd+=item.qty; });
+  var fab=document.getElementById('kiosk-cart-fab');
+  document.getElementById('kiosk-cart-count').textContent=qtd;
+  document.getElementById('kiosk-cart-total-fab').textContent='R$ '+total.toFixed(2).replace('.',',');
+  if(qtd>0) fab.classList.add('visible'); else fab.classList.remove('visible');
+}
+function kioskCartOpen() { kioskRenderCart(); document.getElementById('kiosk-cart-screen').classList.add('active'); }
+function kioskCartClose() { document.getElementById('kiosk-cart-screen').classList.remove('active'); }
+function kioskCartClear() { KIOSK.carrinho=[]; KIOSK.pagSel=null; kioskAtualizarFab(); kioskCartClose(); }
+function kioskRenderCart() {
+  var html='', total=0;
+  KIOSK.carrinho.forEach(function(item,i) {
+    var subtotal=item.preco*item.qty; total+=subtotal;
+    html+='<div class="kiosk-cart-item"><div class="kci-nome">'+item.nome+'</div>' +
+      '<div class="kci-qty"><button onclick="kioskQtyMenos('+i+')">−</button><span class="kci-num">'+item.qty+'</span><button onclick="kioskQtyMais('+i+')">+</button></div>' +
+      '<div class="kci-preco">R$ '+subtotal.toFixed(2).replace('.',',')+'</div></div>';
+  });
+  if (!html) html='<div style="text-align:center;padding:40px;color:#999;font-size:0.95rem">Carrinho vazio</div>';
+  document.getElementById('kiosk-cart-list').innerHTML=html;
+  document.getElementById('kiosk-total-val').textContent='R$ '+total.toFixed(2).replace('.',',');
+  document.querySelectorAll('.kiosk-pag-btn').forEach(function(b){ b.classList.remove('selected'); if(b.getAttribute('data-pag')===KIOSK.pagSel) b.classList.add('selected'); });
+  document.getElementById('kiosk-btn-pagar').disabled=!KIOSK.pagSel||KIOSK.carrinho.length===0;
+}
+function kioskQtyMenos(i) { if(KIOSK.carrinho[i].qty>1){KIOSK.carrinho[i].qty--;}else{KIOSK.carrinho.splice(i,1);} kioskAtualizarFab(); kioskRenderCart(); }
+function kioskQtyMais(i) { KIOSK.carrinho[i].qty++; kioskAtualizarFab(); kioskRenderCart(); }
+function kioskSelPag(btn, pag) {
+  KIOSK.pagSel=pag;
+  document.querySelectorAll('.kiosk-pag-btn').forEach(function(b){ b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  document.getElementById('kiosk-btn-pagar').disabled=KIOSK.carrinho.length===0;
+  if (pag==='Crédito'||pag==='Débito') {
+    var total=0; KIOSK.carrinho.forEach(function(item){ total+=item.preco*item.qty; });
+    var centavos=Math.round(total*100);
+    var tipoStone=pag==='Crédito'?'credit':'debit';
+    try{ window.location.href='stone://payment?amount='+centavos+'&type='+tipoStone; }catch(e){}
+  }
+}
+function kioskConfirmarPedido() {
+  if(!KIOSK.pagSel||KIOSK.carrinho.length===0) return;
+  var num=parseInt(localStorage.getItem('slj_senha_num')||'1',10);
+  localStorage.setItem('slj_senha_num',String(num+1));
+  localStorage.setItem('slj_senha_ultima',String(num));
+  if(window._fbSyncExtra){ window._fbSyncExtra('slj_senha_num',String(num+1)); window._fbSyncExtra('slj_senha_ultima',String(num)); }
+  var itens=KIOSK.carrinho.map(function(item){ return {nome:item.nome,qty:item.qty,preco:item.preco,subtotal:item.preco*item.qty}; });
+  var total=itens.reduce(function(s,i){ return s+i.subtotal; },0);
+  var hora=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  var pedido={mesa:'Senha '+num,mesaId:'kiosk_'+num,itens:itens,total:total,forma:KIOSK.pagSel,hora:hora,ts:Date.now(),origem:'PDVA',senha:num,status:'aberta'};
+  if(window.PDV&&Array.isArray(PDV.historico)){ PDV.historico.unshift(pedido); if(typeof pdvSalvar==='function') pdvSalvar(); if(typeof pdvRenderContas==='function') pdvRenderContas(); }
+  try{ var kds=JSON.parse(localStorage.getItem('slj_kds')||'[]'); kds.unshift({id:'kiosk_'+num+'_'+Date.now(),mesa:'PDVA - Senha '+num,itens:itens,hora:hora,ts:Date.now(),status:'pendente'}); localStorage.setItem('slj_kds',JSON.stringify(kds)); }catch(e){}
+  document.getElementById('kiosk-cart-screen').classList.remove('active');
+  document.getElementById('kiosk-confirm-num').textContent=num;
+  document.getElementById('kiosk-confirm-pag').textContent=KIOSK.pagSel;
+  document.getElementById('kiosk-confirm-total').textContent='R$ '+total.toFixed(2).replace('.',',');
+  document.getElementById('kiosk-confirm-screen').classList.add('active');
+  kioskAtualizarSenha();
+  setTimeout(function(){ kioskImprimirSenha(num,itens,total,KIOSK.pagSel,hora); },400);
+  KIOSK.carrinho=[]; KIOSK.pagSel=null; kioskAtualizarFab();
+}
+function kioskImprimirSenha(num,itens,total,forma,hora) {
+  var itensHtml=itens.map(function(it){ return '<tr><td>'+it.nome+' x'+it.qty+'</td><td style="text-align:right">R$ '+it.subtotal.toFixed(2).replace('.',',')+'</td></tr>'; }).join('');
+  var style='body{font-family:monospace;font-size:13px;width:280px;margin:0 auto;padding:8px}h2{text-align:center;font-size:1.5rem;margin:4px 0}.senha-num{font-size:3rem;font-weight:900;text-align:center;border:3px solid #000;padding:8px;margin:8px 0}table{width:100%;border-collapse:collapse}td{padding:2px 0}.total{font-weight:700;border-top:1px dashed #000;padding-top:4px;margin-top:4px}.centro{text-align:center}hr{border:none;border-top:1px dashed #000}@media print{button{display:none}}';
+  var body='<div class="centro"><b>🍊 Suco Laranjinha</b></div><hr><div class="centro" style="font-size:0.8rem">AUTOATENDIMENTO</div><div class="centro" style="font-size:0.75rem">'+hora+'</div><hr><div class="centro" style="font-size:0.8rem;margin-bottom:2px">SENHA</div><div class="senha-num">'+num+'</div><hr><table>'+itensHtml+'</table><hr><div class="total centro">Total: R$ '+total.toFixed(2).replace('.',',')+'</div><div class="centro" style="margin-top:4px;font-size:0.8rem">Pagamento: '+forma+'</div><hr><div class="centro" style="font-size:0.75rem">Aguarde ser chamado!</div><br><button onclick="window.print()" style="width:100%;padding:8px;background:#FF6B00;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer">🖸 Imprimir / Salvar PDF</button>';
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Senha '+num+'</title><style>'+style+'</style></head><body>'+body+'</body></html>';
+  var w=window.open('','_blank','width=320,height=500');
+  if(w){ w.document.write(html); w.document.close(); setTimeout(function(){ try{w.print();}catch(e){} },600); }
+}
+function kioskNovoPedido() { document.getElementById('kiosk-confirm-screen').classList.remove('active'); kioskRenderProdutos(); }
+function kioskAdminOpen() { document.getElementById('kiosk-admin-senha').value=''; document.getElementById('kiosk-admin-modal').classList.add('active'); setTimeout(function(){ document.getElementById('kiosk-admin-senha').focus(); },100); }
+function kioskAdminFechar() { document.getElementById('kiosk-admin-modal').classList.remove('active'); }
+function kioskAdminConfirmar() {
+  var senha=document.getElementById('kiosk-admin-senha').value;
+  var fnv=function(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=(h*16777619)>>>0;}return h.toString(16);};
+  var hash=fnv(senha);
+  var auth=null; try{auth=JSON.parse(localStorage.getItem('slj_auth_data')||'null');}catch(e){}
+  var senhaFin=null; try{var xData=localStorage.getItem('slj_extras_cache');if(xData){var xObj=JSON.parse(xData);senhaFin=xObj.senha_sistema||null;}}catch(e){}
+  var ok=(auth&&auth.passHash&&auth.passHash===hash)||(senhaFin&&senha===senhaFin);
+  if(ok){ kioskClose(); } else { document.getElementById('kiosk-admin-senha').style.borderColor='#e74c3c'; document.getElementById('kiosk-admin-senha').value=''; setTimeout(function(){ document.getElementById('kiosk-admin-senha').style.borderColor='#ddd'; },1500); }
+}
+function prodFotoPreview(prefix) {
+  var input=document.getElementById(prefix+'-prod-foto-input');
+  var preview=document.getElementById(prefix+'-prod-foto-preview');
+  var placeholder=document.getElementById(prefix+'-prod-foto-placeholder');
+  var urlInput=document.getElementById(prefix+'-prod-foto-url');
+  var limpar=document.getElementById(prefix+'-prod-foto-limpar');
+  if(!input||!input.files||!input.files[0]) return;
+  var file=input.files[0];
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var base64=e.target.result;
+    urlInput.value=base64; preview.src=base64; preview.style.display='block';
+    if(placeholder) placeholder.style.display='none';
+    if(limpar) limpar.style.display='inline-block';
+    prodFotoUploadFirebase(file,prefix);
+  };
+  reader.readAsDataURL(file);
+}
+function prodFotoLimpar(prefix) {
+  var preview=document.getElementById(prefix+'-prod-foto-preview');
+  var placeholder=document.getElementById(prefix+'-prod-foto-placeholder');
+  var urlInput=document.getElementById(prefix+'-prod-foto-url');
+  var limpar=document.getElementById(prefix+'-prod-foto-limpar');
+  var input=document.getElementById(prefix+'-prod-foto-input');
+  if(preview){preview.src='';preview.style.display='none';}
+  if(placeholder) placeholder.style.display='flex';
+  if(urlInput) urlInput.value='';
+  if(limpar) limpar.style.display='none';
+  if(input) input.value='';
+}
+function prodFotoUploadFirebase(file,prefix) {
+  if(!window.firebase||!firebase.storage) return;
+  try{
+    var storageRef=firebase.storage().ref('slj_produtos/'+Date.now()+'_'+file.name);
+    storageRef.put(file).then(function(snap){ return snap.ref.getDownloadURL(); }).then(function(url){
+      var urlInput=document.getElementById(prefix+'-prod-foto-url');
+      if(urlInput) urlInput.value=url;
+      var preview=document.getElementById(prefix+'-prod-foto-preview');
+      if(preview) preview.src=url;
+    }).catch(function(e){});
+  }catch(e){}
+}
+document.addEventListener('keydown',function(e){
+  var kioskAtivo=document.getElementById('pg-kiosk')&&document.getElementById('pg-kiosk').classList.contains('active');
+  if(!kioskAtivo) return;
+  if(e.key==='F11'||e.key==='Escape'||(e.altKey&&e.key==='Tab')||(e.altKey&&e.key==='F4')){ e.preventDefault(); e.stopPropagation(); }
+});
+
 
 </script>
+
+
+<!-- ══ TELA KIOSK / AUTOATENDIMENTO ════════════════════════════════════════ -->
+<div id="pg-kiosk">
+  <div id="kiosk-header">
+    <div class="kh-logo"></div>
+    <div class="kh-title">🍊 Faça seu Pedido!</div>
+    <div class="kh-senha">
+      <div class="ks-label">Última senha</div>
+      <div class="ks-num" id="kiosk-ultima-senha">—</div>
+    </div>
+    <button onclick="kioskAdminOpen()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:50%;width:44px;height:44px;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center">⚙</button>
+  </div>
+  <div id="kiosk-cats"></div>
+  <div id="kiosk-produtos-wrap"><div id="kiosk-grid"></div></div>
+  <button id="kiosk-cart-fab" onclick="kioskCartOpen()">
+    <span>🛒 Ver Carrinho</span>
+    <span class="fab-badge" id="kiosk-cart-count">0</span>
+    <span id="kiosk-cart-total-fab">R$ 0,00</span>
+  </button>
+</div>
+<div id="kiosk-cart-screen">
+  <div id="kiosk-cart-header">
+    <button class="kch-back" onclick="kioskCartClose()">←</button>
+    <h2>🛒 Meu Pedido</h2>
+    <button onclick="kioskCartClear()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:10px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:0.85rem">🗑 Limpar</button>
+  </div>
+  <div id="kiosk-cart-list"></div>
+  <div id="kiosk-cart-footer">
+    <div id="kiosk-cart-total">Total: <span id="kiosk-total-val">R$ 0,00</span></div>
+    <div class="kiosk-pag-grid">
+      <div class="kiosk-pag-btn" data-pag="Dinheiro" onclick="kioskSelPag(this,'Dinheiro')"><span class="kpb-icon">💵</span><span class="kpb-label">Dinheiro</span></div>
+      <div class="kiosk-pag-btn" data-pag="Pix" onclick="kioskSelPag(this,'Pix')"><span class="kpb-icon">📲</span><span class="kpb-label">Pix</span></div>
+      <div class="kiosk-pag-btn" data-pag="Crédito" onclick="kioskSelPag(this,'Crédito')"><span class="kpb-icon">💳</span><span class="kpb-label">Crédito (Stone)</span></div>
+      <div class="kiosk-pag-btn" data-pag="Débito" onclick="kioskSelPag(this,'Débito')"><span class="kpb-icon">🏧</span><span class="kpb-label">Débito (Stone)</span></div>
+    </div>
+    <button id="kiosk-btn-pagar" onclick="kioskConfirmarPedido()" disabled>✅ Confirmar Pedido</button>
+  </div>
+</div>
+<div id="kiosk-confirm-screen">
+  <div class="kiosk-confirm-box">
+    <div class="kiosk-confirm-icon">✅</div>
+    <div class="kiosk-confirm-label">Sua senha é</div>
+    <div class="kiosk-confirm-senha-num" id="kiosk-confirm-num">—</div>
+    <div class="kiosk-confirm-msg">Pagamento: <strong id="kiosk-confirm-pag">—</strong><br>Total: <strong id="kiosk-confirm-total">—</strong><br><br>Aguarde ser chamado no balcão! 🍊</div>
+    <button class="kiosk-confirm-novo" onclick="kioskNovoPedido()">🛒 Novo Pedido</button>
+  </div>
+</div>
+<div id="kiosk-admin-modal">
+  <div class="kiosk-admin-box">
+    <h3>🔒 Acesso Restrito</h3>
+    <p>Digite a senha do sistema para sair do modo kiosk</p>
+    <input type="password" id="kiosk-admin-senha" placeholder="••••••••" maxlength="20" onkeydown="if(event.key==='Enter')kioskAdminConfirmar()">
+    <button class="kiosk-admin-btn" onclick="kioskAdminConfirmar()">✅ Confirmar</button>
+    <button class="kiosk-admin-btn kiosk-admin-cancel" onclick="kioskAdminFechar()">Cancelar</button>
+  </div>
+</div>
+
