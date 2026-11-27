@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Suco Laranjinha -- PDV v1.6.258</title>
+<title>Suco Laranjinha -- PDV v1.6.259</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Firebase loaded as module below -->
@@ -2484,7 +2484,7 @@ function slug(s) {
 // ============================================================
 // ARMAZENAMENTO -- localStorage simples e direto
 // ============================================================
-var APP_VERSION = 'v1.6.258';
+var APP_VERSION = 'v1.6.259';
 var STORAGE_KEY = 'slj_2026v4';
 
 // ============================================================
@@ -11011,6 +11011,20 @@ function _sljSyncFromFirebase() {
         if (parsed && parsed.user && parsed.passHash) {
           localStorage.setItem('slj_auth_cache', JSON.stringify(parsed));
         }
+      }
+      /* Sincroniza config EmailJS do Firebase para variaveis ao vivo */
+      if (val && val.slj_emailjs_cfg) {
+        try {
+          var ejsCfg = typeof val.slj_emailjs_cfg === 'string'
+            ? JSON.parse(val.slj_emailjs_cfg) : val.slj_emailjs_cfg;
+          if (ejsCfg && ejsCfg.serviceId && ejsCfg.templateId && ejsCfg.publicKey) {
+            localStorage.setItem('slj_emailjs_cfg', JSON.stringify(ejsCfg));
+            EMAILJS_SERVICE_ID  = ejsCfg.serviceId;
+            EMAILJS_TEMPLATE_ID = ejsCfg.templateId;
+            EMAILJS_PUBLIC_KEY  = ejsCfg.publicKey;
+            try { emailjs.init(EMAILJS_PUBLIC_KEY); } catch(e){}
+          }
+        } catch(e) {}
       }
     } catch(e) {}
   };
